@@ -1,18 +1,18 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
-export default function WordAssistantPage() {
+export default function AjudaPage() {
   return (
     <div className="px-4 lg:px-6">
       <Card>
         <CardHeader>
-          <CardTitle>Word Assistant</CardTitle>
+          <CardTitle>Ajuda</CardTitle>
           <CardDescription>
-            Assistentes de texto e documentos
+          Página de Ajuda aqui
           </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            Conteúdo da página Word Assistant será implementado aqui.
+            Conteúdo da página Ajuda será implementado aqui.
           </p>
         </CardContent>
       </Card>

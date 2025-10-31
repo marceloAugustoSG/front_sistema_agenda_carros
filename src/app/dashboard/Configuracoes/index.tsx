@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
-export default function SettingsPage() {
+export default function ConfiguracoesPage() {
   return (
     <div className="px-4 lg:px-6">
       <Card>
