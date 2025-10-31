@@ -1,12 +1,12 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import DashboardLayout from "./app/dashboard/layout";
-import DashboardHome from "./app/dashboard/Home";
-import LoginPage from "./app/login";
+import DashboardLayout from "./pages/dashboard/layout";
+import DashboardHome from "./pages/dashboard/Home";
+import LoginPage from "./pages/login";
 import { Toaster } from "./components/ui/sonner";
-import LogistasPage from "./app/dashboard/Logistas";
-import EstatisticasPage from "./app/dashboard/Estatisticas";
-import ConfiguracoesPage from "./app/dashboard/Configuracoes";
-import AjudaPage from "./app/dashboard/Ajuda";
+import LogistasPage from "./pages/dashboard/Logistas";
+import EstatisticasPage from "./pages/dashboard/Estatisticas";
+import ConfiguracoesPage from "./pages/dashboard/Configuracoes";
+import AjudaPage from "./pages/dashboard/Ajuda";
 
 export function App() {
   return (
