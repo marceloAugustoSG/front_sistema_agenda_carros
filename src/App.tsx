@@ -7,12 +7,14 @@ import LogistasPage from "./pages/dashboard/Logistas";
 import EstatisticasPage from "./pages/dashboard/Estatisticas";
 import ConfiguracoesPage from "./pages/dashboard/Configuracoes";
 import AjudaPage from "./pages/dashboard/Ajuda";
+import RegisterPage from "./pages/register";
 
 export function App() {
   return (
     <>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<DashboardHome />} />
           <Route path="estatisticas" element={<EstatisticasPage />} />
