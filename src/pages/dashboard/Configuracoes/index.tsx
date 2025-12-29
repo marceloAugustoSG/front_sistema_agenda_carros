@@ -7,7 +7,7 @@ export default function ConfiguracoesPage() {
         <CardHeader>
           <CardTitle>Configurações</CardTitle>
           <CardDescription>
-          Página de configurações aqui
+            Página de configurações aqui
           </CardDescription>
         </CardHeader>
         <CardContent>

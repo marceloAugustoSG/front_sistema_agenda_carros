@@ -6,7 +6,10 @@ import {
   IconHelp,
   IconInnerShadowTop,
   IconSettings,
+  IconCar,
   IconUsers,
+  IconShoppingCart,
+  IconPackage,
 } from "@tabler/icons-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -40,14 +43,27 @@ const data = {
       url: "/dashboard/estatisticas",
       icon: IconChartBar,
     },
-
     {
-      title: "Logistas",
-      url: "/dashboard/logistas",
+      title: "Clientes",
+      url: "/dashboard/clientes",
       icon: IconUsers,
     },
+    {
+      title: "Veículos",
+      url: "/dashboard/veiculos",
+      icon: IconCar,
+    },
+    {
+      title: "Estoque",
+      url: "/dashboard/estoque",
+      icon: IconPackage,
+    },
+    {
+      title: "Interesses",
+      url: "/dashboard/interesses",
+      icon: IconShoppingCart,
+    },
   ],
- 
   navSecondary: [
     {
       title: "Configurações",
@@ -59,8 +75,7 @@ const data = {
       url: "/dashboard/ajuda",
       icon: IconHelp,
     },
-
-  ]
+  ],
 
 }
 
