@@ -38,8 +38,8 @@ export default function PropostasPage() {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [veiculos, setVeiculos] = useState<Veiculo[]>([])
   const [filtroStatus, setFiltroStatus] = useState<"todas" | "pendente" | "aceita" | "recusada" | "vencida">("todas")
-  const [busca, setBusca] = useState("")
-  const [modalAberto, setModalAberto] = useState(false)
+  const [busca, setBusca] = useState<string>("")
+  const [modalAberto, setModalAberto] = useState<boolean>(false)
 
   // Carregar dados do localStorage
   useEffect(() => {
@@ -48,7 +48,20 @@ export default function PropostasPage() {
     setVeiculos(getVeiculos())
   }, [])
 
-  const [formData, setFormData] = useState({
+  type FormDataProposta = {
+    clienteId: string
+    veiculoId: string
+    valorVeiculo: string
+    desconto: string
+    formaPagamento: string
+    entrada: string
+    numeroParcelas: string
+    valorParcela: string
+    validade: string
+    observacoes: string
+  }
+
+  const [formData, setFormData] = useState<FormDataProposta>({
     clienteId: "",
     veiculoId: "",
     valorVeiculo: "",
@@ -494,7 +507,7 @@ export default function PropostasPage() {
                   className="w-full pl-8"
                 />
               </div>
-              <Select value={filtroStatus} onValueChange={(v: any) => setFiltroStatus(v)}>
+              <Select value={filtroStatus} onValueChange={(v) => setFiltroStatus(v as typeof filtroStatus)}>
                 <SelectTrigger className="w-full sm:w-[140px]">
                   <SelectValue />
                 </SelectTrigger>

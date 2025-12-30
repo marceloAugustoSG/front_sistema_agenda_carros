@@ -2,7 +2,7 @@ import * as React from "react"
 import { Link } from "react-router-dom"
 import {
   IconChartBar,
-  IconDashboard,
+  IconHome,
   IconHelp,
   IconInnerShadowTop,
   IconSettings,
@@ -36,38 +36,44 @@ const data = {
     {
       title: "Início",
       url: "/dashboard",
-      icon: IconDashboard,
+      icon: IconHome,
+      color: "text-blue-600",
     },
-
     {
       title: "Estatisticas",
       url: "/dashboard/estatisticas",
       icon: IconChartBar,
+      color: "text-purple-600",
     },
     {
       title: "Clientes",
       url: "/dashboard/clientes",
       icon: IconUsers,
+      color: "text-green-600",
     },
     {
       title: "Veículos",
       url: "/dashboard/veiculos",
       icon: IconCar,
+      color: "text-orange-600",
     },
     {
       title: "Interesses",
       url: "/dashboard/interesses",
       icon: IconShoppingCart,
+      color: "text-pink-600",
     },
     {
       title: "Lembretes",
       url: "/dashboard/lembretes",
       icon: IconBell,
+      color: "text-yellow-600",
     },
     {
       title: "Propostas",
       url: "/dashboard/propostas",
       icon: IconFileText,
+      color: "text-indigo-600",
     },
   ],
   navSecondary: [
@@ -75,11 +81,13 @@ const data = {
       title: "Configurações",
       url: "/dashboard/configuracoes",
       icon: IconSettings,
+      color: "text-gray-600",
     },
     {
       title: "Ajuda",
       url: "/dashboard/ajuda",
       icon: IconHelp,
+      color: "text-cyan-600",
     },
   ],
 

@@ -87,103 +87,15 @@ const STORAGE_KEYS = {
   PROPOSTAS: "agenda_propostas",
 }
 
-// Dados iniciais (para primeira vez)
-const veiculosIniciais: Veiculo[] = [
-  {
-    id: "1",
-    marca: "Toyota",
-    modelo: "Corolla",
-    ano: "2023",
-    placa: "ABC-1234",
-    cor: "Branco",
-    chassi: "9BW12345678901234",
-    valor: "150000",
-    combustivel: "flex",
-    quilometragem: "15000",
-    status: "disponivel",
-  },
-  {
-    id: "2",
-    marca: "Honda",
-    modelo: "Civic",
-    ano: "2024",
-    placa: "DEF-5678",
-    cor: "Preto",
-    chassi: "9BW98765432109876",
-    valor: "180000",
-    combustivel: "flex",
-    quilometragem: "5000",
-    status: "disponivel",
-  },
-  {
-    id: "3",
-    marca: "Ford",
-    modelo: "Fiesta",
-    ano: "2022",
-    placa: "GHI-9012",
-    cor: "Prata",
-    chassi: "9BW11111111111111",
-    valor: "80000",
-    combustivel: "flex",
-    quilometragem: "30000",
-    status: "vendido",
-  },
-  {
-    id: "4",
-    marca: "Volkswagen",
-    modelo: "Gol",
-    ano: "2023",
-    placa: "JKL-3456",
-    cor: "Vermelho",
-    chassi: "9BW22222222222222",
-    valor: "70000",
-    combustivel: "flex",
-    quilometragem: "20000",
-    status: "disponivel",
-  },
-]
-
-const clientesIniciais: Cliente[] = [
-  {
-    id: "1",
-    nome: "João Silva",
-    telefone: "(11) 99999-9999",
-    email: "joao@email.com",
-    cpf: "123.456.789-00",
-    endereco: "Rua Exemplo, 123 - São Paulo/SP",
-    observacoes: "Cliente interessado em carros econômicos",
-    dataCadastro: new Date().toLocaleDateString("pt-BR"),
-  },
-  {
-    id: "2",
-    nome: "Maria Santos",
-    telefone: "(11) 88888-8888",
-    email: "maria@email.com",
-    cpf: "987.654.321-00",
-    endereco: "Av. Principal, 456 - São Paulo/SP",
-    observacoes: "Prefere carros automáticos",
-    dataCadastro: new Date().toLocaleDateString("pt-BR"),
-  },
-  {
-    id: "3",
-    nome: "Pedro Costa",
-    telefone: "(11) 77777-7777",
-    email: "pedro@email.com",
-    cpf: "111.222.333-44",
-    endereco: "Rua das Flores, 789 - São Paulo/SP",
-    observacoes: "",
-    dataCadastro: new Date().toLocaleDateString("pt-BR"),
-  },
-]
-
 // Funções genéricas
 function getFromStorage<T>(key: string, defaultValue: T[]): T[] {
   try {
+    if (typeof window === "undefined") return defaultValue
     const item = localStorage.getItem(key)
     if (item) {
       return JSON.parse(item)
     }
-    // Se não existe, salva os dados iniciais
+    // Se não existe, retorna array vazio e salva
     setToStorage(key, defaultValue)
     return defaultValue
   } catch (error) {
@@ -202,7 +114,7 @@ function setToStorage<T>(key: string, data: T[]): void {
 
 // Funções específicas para Veículos
 export function getVeiculos(): Veiculo[] {
-  return getFromStorage<Veiculo>(STORAGE_KEYS.VEICULOS, veiculosIniciais)
+  return getFromStorage<Veiculo>(STORAGE_KEYS.VEICULOS, [])
 }
 
 export function saveVeiculos(veiculos: Veiculo[]): void {
@@ -232,7 +144,7 @@ export function deleteVeiculo(id: string): void {
 
 // Funções específicas para Clientes
 export function getClientes(): Cliente[] {
-  return getFromStorage<Cliente>(STORAGE_KEYS.CLIENTES, clientesIniciais)
+  return getFromStorage<Cliente>(STORAGE_KEYS.CLIENTES, [])
 }
 
 export function saveClientes(clientes: Cliente[]): void {

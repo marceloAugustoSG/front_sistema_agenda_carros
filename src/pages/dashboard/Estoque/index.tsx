@@ -10,64 +10,21 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-// Simulação de dados - em produção viria de uma API
-const veiculosMock = [
-  {
-    id: "1",
-    marca: "Toyota",
-    modelo: "Corolla",
-    ano: "2023",
-    placa: "ABC-1234",
-    cor: "Branco",
-    valor: "150000",
-    combustivel: "flex",
-    quilometragem: "15000",
-    status: "disponivel",
-  },
-  {
-    id: "2",
-    marca: "Honda",
-    modelo: "Civic",
-    ano: "2024",
-    placa: "DEF-5678",
-    cor: "Preto",
-    valor: "180000",
-    combustivel: "flex",
-    quilometragem: "5000",
-    status: "disponivel",
-  },
-  {
-    id: "3",
-    marca: "Ford",
-    modelo: "Fiesta",
-    ano: "2022",
-    placa: "GHI-9012",
-    cor: "Prata",
-    valor: "80000",
-    combustivel: "flex",
-    quilometragem: "30000",
-    status: "vendido",
-  },
-  {
-    id: "4",
-    marca: "Volkswagen",
-    modelo: "Gol",
-    ano: "2023",
-    placa: "JKL-3456",
-    cor: "Vermelho",
-    valor: "70000",
-    combustivel: "flex",
-    quilometragem: "20000",
-    status: "disponivel",
-  },
-]
+import { useState, useEffect } from "react"
+import { getVeiculos, type Veiculo } from "@/utils/storage"
 
 export default function EstoquePage() {
+  const [veiculos, setVeiculos] = useState<Veiculo[]>([])
+
+  // Carregar veículos do localStorage
+  useEffect(() => {
+    setVeiculos(getVeiculos())
+  }, [])
   const [filtroMarca, setFiltroMarca] = useState("")
   const [filtroStatus, setFiltroStatus] = useState("todos")
   const [busca, setBusca] = useState("")
 
-  const veiculosFiltrados = veiculosMock.filter((veiculo) => {
+  const veiculosFiltrados = veiculos.filter((veiculo) => {
     const matchMarca = !filtroMarca || veiculo.marca.toLowerCase().includes(filtroMarca.toLowerCase())
     const matchStatus = filtroStatus === "todos" || veiculo.status === filtroStatus
     const matchBusca =
@@ -201,24 +158,24 @@ export default function EstoquePage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div>
                 <p className="text-2xl font-bold text-green-600">
-                  {veiculosMock.filter((v) => v.status === "disponivel").length}
+                  {veiculos.filter((v) => v.status === "disponivel").length}
                 </p>
                 <p className="text-sm text-muted-foreground">Disponíveis</p>
               </div>
               <div>
                 <p className="text-2xl font-bold text-yellow-600">
-                  {veiculosMock.filter((v) => v.status === "reservado").length}
+                  {veiculos.filter((v) => v.status === "reservado").length}
                 </p>
                 <p className="text-sm text-muted-foreground">Reservados</p>
               </div>
               <div>
                 <p className="text-2xl font-bold">
-                  {veiculosMock.filter((v) => v.status === "vendido").length}
+                  {veiculos.filter((v) => v.status === "vendido").length}
                 </p>
                 <p className="text-sm text-muted-foreground">Vendidos</p>
               </div>
               <div>
-                <p className="text-2xl font-bold">{veiculosMock.length}</p>
+                <p className="text-2xl font-bold">{veiculos.length}</p>
                 <p className="text-sm text-muted-foreground">Total</p>
               </div>
             </div>

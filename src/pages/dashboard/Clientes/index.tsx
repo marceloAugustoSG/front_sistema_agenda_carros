@@ -14,12 +14,11 @@ import {
   IconCar,
   IconBell,
   IconCheck,
-  IconX,
 } from "@tabler/icons-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getClientes, addCliente, type Cliente } from "@/utils/storage"
 
-// Histórico mockado de interações (pode ser expandido depois)
+// Histórico de interações (vazio por padrão, será preenchido conforme uso)
 const historicoMock: Record<
   string,
   Array<{
@@ -29,135 +28,19 @@ const historicoMock: Record<
     data: string
     detalhes?: string
   }>
-> = {
-  "1": [
-    {
-      id: "1",
-      tipo: "cadastro",
-      descricao: "Cliente cadastrado no sistema",
-      data: "15/01/2024 10:30",
-    },
-    {
-      id: "2",
-      tipo: "interesse",
-      descricao: "Interesse registrado: Toyota Corolla 2024",
-      data: "15/01/2024 11:00",
-      detalhes: "Aguardando estoque",
-    },
-    {
-      id: "3",
-      tipo: "contato",
-      descricao: "Contato realizado via telefone",
-      data: "18/01/2024 14:30",
-      detalhes: "Cliente confirmou interesse no Corolla",
-    },
-    {
-      id: "4",
-      tipo: "notificacao",
-      descricao: "Cliente notificado: Toyota Corolla 2024 disponível",
-      data: "20/01/2024 09:15",
-      detalhes: "Veículo chegou ao estoque",
-    },
-    {
-      id: "5",
-      tipo: "interesse",
-      descricao: "Interesse registrado: Honda Civic 2023",
-      data: "22/01/2024 16:45",
-      detalhes: "Aguardando estoque",
-    },
-  ],
-  "2": [
-    {
-      id: "1",
-      tipo: "cadastro",
-      descricao: "Cliente cadastrado no sistema",
-      data: "20/01/2024 09:00",
-    },
-    {
-      id: "2",
-      tipo: "interesse",
-      descricao: "Interesse registrado: Honda Civic 2023",
-      data: "20/01/2024 10:15",
-      detalhes: "Disponível em estoque",
-    },
-    {
-      id: "3",
-      tipo: "notificacao",
-      descricao: "Cliente notificado sobre Honda Civic",
-      data: "20/01/2024 10:20",
-      detalhes: "Notificação enviada",
-    },
-    {
-      id: "4",
-      tipo: "contato",
-      descricao: "Contato realizado via WhatsApp",
-      data: "21/01/2024 15:00",
-      detalhes: "Agendou test-drive para amanhã",
-    },
-  ],
-  "3": [
-    {
-      id: "1",
-      tipo: "cadastro",
-      descricao: "Cliente cadastrado no sistema",
-      data: "25/01/2024 11:00",
-    },
-    {
-      id: "2",
-      tipo: "interesse",
-      descricao: "Interesse registrado: Ford Fiesta 2022",
-      data: "25/01/2024 16:45",
-      detalhes: "Aguardando estoque",
-    },
-  ],
-  "4": [
-    {
-      id: "1",
-      tipo: "cadastro",
-      descricao: "Cliente cadastrado no sistema",
-      data: "10/02/2024 08:30",
-    },
-    {
-      id: "2",
-      tipo: "interesse",
-      descricao: "Interesse registrado: Volkswagen Gol 2023",
-      data: "10/02/2024 09:00",
-      detalhes: "Aguardando estoque",
-    },
-    {
-      id: "3",
-      tipo: "contato",
-      descricao: "Contato realizado via telefone",
-      data: "12/02/2024 10:00",
-      detalhes: "Cliente quer ver o veículo quando chegar",
-    },
-  ],
-  "5": [
-    {
-      id: "1",
-      tipo: "cadastro",
-      descricao: "Cliente cadastrado no sistema",
-      data: "05/02/2024 14:00",
-    },
-    {
-      id: "2",
-      tipo: "interesse",
-      descricao: "Interesse registrado: Chevrolet Onix 2023",
-      data: "05/02/2024 15:30",
-      detalhes: "Aguardando estoque",
-    },
-    {
-      id: "3",
-      tipo: "venda",
-      descricao: "Venda realizada: Chevrolet Onix 2023",
-      data: "08/02/2024 11:00",
-      detalhes: "Venda concluída com sucesso!",
-    },
-  ],
+> = {}
+
+type FormDataCliente = {
+  nome: string
+  telefone: string
+  email: string
+  cpf: string
+  endereco: string
+  observacoes: string
 }
 
 export default function ClientesPage() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormDataCliente>({
     nome: "",
     telefone: "",
     email: "",
@@ -167,7 +50,7 @@ export default function ClientesPage() {
   })
 
   const [clientes, setClientes] = useState<Cliente[]>([])
-  const [busca, setBusca] = useState("")
+  const [busca, setBusca] = useState<string>("")
   const [clienteSelecionado, setClienteSelecionado] = useState<string | null>(null)
 
   // Carregar clientes do localStorage ao montar o componente

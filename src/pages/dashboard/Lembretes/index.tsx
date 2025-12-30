@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -21,78 +21,41 @@ import {
   IconX,
   IconUser,
   IconAlertCircle,
+  IconPlus,
 } from "@tabler/icons-react"
-import { Link } from "react-router-dom"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
-// Dados mockados de clientes
-const clientesMock = [
-  { id: "1", nome: "João Silva", telefone: "(11) 99999-9999" },
-  { id: "2", nome: "Maria Santos", telefone: "(11) 88888-8888" },
-  { id: "3", nome: "Pedro Costa", telefone: "(11) 77777-7777" },
-  { id: "4", nome: "Ana Oliveira", telefone: "(11) 66666-6666" },
-  { id: "5", nome: "Carlos Souza", telefone: "(11) 55555-5555" },
-]
-
-// Lembretes mockados
-const lembretesMock = [
-  {
-    id: "1",
-    clienteId: "1",
-    clienteNome: "João Silva",
-    clienteTelefone: "(11) 99999-9999",
-    titulo: "Ligar sobre proposta",
-    descricao: "Cliente quer ver proposta do Corolla 2024",
-    dataLembrete: "2024-02-15",
-    hora: "14:00",
-    tipo: "ligar",
-    prioridade: "alta",
-    concluido: false,
-    veiculoRelacionado: "Toyota Corolla 2024",
-  },
-  {
-    id: "2",
-    clienteId: "2",
-    clienteNome: "Maria Santos",
-    clienteTelefone: "(11) 88888-8888",
-    titulo: "Follow-up - 3 dias",
-    descricao: "Fazer follow-up após interesse no Civic",
-    dataLembrete: "2024-02-14",
-    hora: "10:00",
-    tipo: "followup",
-    prioridade: "media",
-    concluido: false,
-    veiculoRelacionado: "Honda Civic 2023",
-  },
-  {
-    id: "3",
-    clienteId: "3",
-    clienteNome: "Pedro Costa",
-    clienteTelefone: "(11) 77777-7777",
-    titulo: "Enviar informações",
-    descricao: "Enviar ficha técnica do Fiesta",
-    dataLembrete: "2024-02-13",
-    hora: "16:00",
-    tipo: "lembrete",
-    prioridade: "baixa",
-    concluido: true,
-    veiculoRelacionado: "Ford Fiesta 2022",
-  },
-]
+import { getClientes, getLembretes, addLembrete, updateLembrete, deleteLembrete, type Cliente, type Lembrete } from "@/utils/storage"
 
 export default function LembretesPage() {
-  const [lembretes, setLembretes] = useState(lembretesMock)
+  const [lembretes, setLembretes] = useState<Lembrete[]>([])
+  const [clientes, setClientes] = useState<Cliente[]>([])
   const [filtroStatus, setFiltroStatus] = useState<"todos" | "pendentes" | "concluidos">("todos")
   const [filtroPrioridade, setFiltroPrioridade] = useState<"todas" | "alta" | "media" | "baixa">("todas")
+  const [modalAberto, setModalAberto] = useState<boolean>(false)
+
+  // Carregar dados do localStorage
+  useEffect(() => {
+    setLembretes(getLembretes())
+    setClientes(getClientes())
+  }, [])
 
   const [formData, setFormData] = useState({
     clienteId: "",
     titulo: "",
     descricao: "",
-    dataLembrete: "",
-    hora: "",
-    tipo: "ligar",
-    prioridade: "media",
-    veiculoRelacionado: "",
+    data: "",
+    tipo: "contato" as Lembrete["tipo"],
+    prioridade: "media" as Lembrete["prioridade"],
+    veiculoId: "",
+    veiculoDescricao: "",
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -107,32 +70,36 @@ export default function LembretesPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.clienteId || !formData.titulo || !formData.dataLembrete || !formData.hora) {
-      toast.error("Preencha pelo menos: Cliente, Título, Data e Hora")
+    if (!formData.clienteId || !formData.titulo || !formData.data) {
+      toast.error("Preencha pelo menos: Cliente, Título e Data")
       return
     }
 
-    const cliente = clientesMock.find((c) => c.id === formData.clienteId)
+    const cliente = clientes.find((c) => c.id === formData.clienteId)
     if (!cliente) {
       toast.error("Cliente não encontrado")
       return
     }
 
-    const novoLembrete = {
+    const novoLembrete: Lembrete = {
       id: Date.now().toString(),
       clienteId: formData.clienteId,
       clienteNome: cliente.nome,
-      clienteTelefone: cliente.telefone,
       titulo: formData.titulo,
       descricao: formData.descricao,
-      dataLembrete: formData.dataLembrete,
-      hora: formData.hora,
-      tipo: formData.tipo as "ligar" | "followup" | "lembrete",
-      prioridade: formData.prioridade as "alta" | "media" | "baixa",
+      data: formData.data,
+      tipo: formData.tipo,
+      prioridade: formData.prioridade,
       concluido: false,
-      veiculoRelacionado: formData.veiculoRelacionado,
+      dataCriacao: new Date().toISOString().split("T")[0],
+      veiculoId: formData.veiculoId || undefined,
+      veiculoDescricao: formData.veiculoDescricao || undefined,
     }
 
+    // Salvar no localStorage
+    addLembrete(novoLembrete)
+    
+    // Atualizar estado
     setLembretes((prev) => [novoLembrete, ...prev])
     toast.success("Lembrete criado com sucesso!")
 
@@ -140,15 +107,21 @@ export default function LembretesPage() {
       clienteId: "",
       titulo: "",
       descricao: "",
-      dataLembrete: "",
-      hora: "",
-      tipo: "ligar",
+      data: "",
+      tipo: "contato",
       prioridade: "media",
-      veiculoRelacionado: "",
+      veiculoId: "",
+      veiculoDescricao: "",
     })
+    
+    setModalAberto(false)
   }
 
   const handleConcluir = (id: string) => {
+    // Atualizar no localStorage
+    updateLembrete(id, { concluido: true })
+    
+    // Atualizar estado
     setLembretes((prev) =>
       prev.map((l) => (l.id === id ? { ...l, concluido: true } : l))
     )
@@ -156,6 +129,10 @@ export default function LembretesPage() {
   }
 
   const handleExcluir = (id: string) => {
+    // Remover do localStorage
+    deleteLembrete(id)
+    
+    // Atualizar estado
     setLembretes((prev) => prev.filter((l) => l.id !== id))
     toast.success("Lembrete removido!")
   }
@@ -175,22 +152,24 @@ export default function LembretesPage() {
   const lembretesHoje = lembretes.filter((l) => {
     if (l.concluido) return false
     const hoje = new Date().toISOString().split("T")[0]
-    return l.dataLembrete === hoje
+    return l.data === hoje
   })
 
   const lembretesAtrasados = lembretes.filter((l) => {
     if (l.concluido) return false
     const hoje = new Date().toISOString().split("T")[0]
-    return l.dataLembrete < hoje
+    return l.data < hoje
   })
 
   const getIconTipo = (tipo: string) => {
     switch (tipo) {
-      case "ligar":
+      case "contato":
         return <IconPhone className="size-4 text-green-600" />
       case "followup":
         return <IconClock className="size-4 text-blue-600" />
-      case "lembrete":
+      case "reuniao":
+        return <IconCalendar className="size-4 text-purple-600" />
+      case "outro":
         return <IconBell className="size-4 text-yellow-600" />
       default:
         return <IconAlertCircle className="size-4" />
@@ -211,13 +190,7 @@ export default function LembretesPage() {
   }
 
   const formatarData = (data: string) => {
-    const date = new Date(data + "T00:00:00")
-    return date.toLocaleDateString("pt-BR", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    })
+    return new Date(data + "T00:00:00").toLocaleDateString("pt-BR")
   }
 
   const getStatusData = (data: string) => {
@@ -275,187 +248,178 @@ export default function LembretesPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Formulário de Criar Lembrete */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle>Criar Lembrete</CardTitle>
-            <CardDescription>Agende um lembrete para contatar o cliente</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Cliente */}
-              <div className="space-y-2">
-                <Label htmlFor="clienteId">
-                  Cliente <span className="text-destructive">*</span>
-                </Label>
-                <Select
-                  value={formData.clienteId}
-                  onValueChange={(value) => handleSelectChange("clienteId", value)}
-                >
-                  <SelectTrigger id="clienteId">
-                    <SelectValue placeholder="Selecione o cliente" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clientesMock.map((cliente) => (
-                      <SelectItem key={cliente.id} value={cliente.id}>
-                        {cliente.nome} - {cliente.telefone}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Título */}
-              <div className="space-y-2">
-                <Label htmlFor="titulo">
-                  Título <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="titulo"
-                  name="titulo"
-                  value={formData.titulo}
-                  onChange={handleChange}
-                  placeholder="Ex: Ligar sobre proposta"
-                  required
-                />
-              </div>
-
-              {/* Descrição */}
-              <div className="space-y-2">
-                <Label htmlFor="descricao">Descrição</Label>
-                <textarea
-                  id="descricao"
-                  name="descricao"
-                  value={formData.descricao}
-                  onChange={handleChange}
-                  placeholder="Detalhes do lembrete..."
-                  className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                  rows={3}
-                />
-              </div>
-
-              {/* Data e Hora */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="dataLembrete">
-                    Data <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="dataLembrete"
-                    name="dataLembrete"
-                    type="date"
-                    value={formData.dataLembrete}
-                    onChange={handleChange}
-                    min={new Date().toISOString().split("T")[0]}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="hora">
-                    Hora <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="hora"
-                    name="hora"
-                    type="time"
-                    value={formData.hora}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Tipo */}
-              <div className="space-y-2">
-                <Label htmlFor="tipo">Tipo</Label>
-                <Select
-                  value={formData.tipo}
-                  onValueChange={(value) => handleSelectChange("tipo", value)}
-                >
-                  <SelectTrigger id="tipo">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ligar">Ligar</SelectItem>
-                    <SelectItem value="followup">Follow-up</SelectItem>
-                    <SelectItem value="lembrete">Lembrete</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Prioridade */}
-              <div className="space-y-2">
-                <Label htmlFor="prioridade">Prioridade</Label>
-                <Select
-                  value={formData.prioridade}
-                  onValueChange={(value) => handleSelectChange("prioridade", value)}
-                >
-                  <SelectTrigger id="prioridade">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="alta">Alta</SelectItem>
-                    <SelectItem value="media">Média</SelectItem>
-                    <SelectItem value="baixa">Baixa</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Veículo Relacionado */}
-              <div className="space-y-2">
-                <Label htmlFor="veiculoRelacionado">Veículo Relacionado (opcional)</Label>
-                <Input
-                  id="veiculoRelacionado"
-                  name="veiculoRelacionado"
-                  value={formData.veiculoRelacionado}
-                  onChange={handleChange}
-                  placeholder="Ex: Toyota Corolla 2024"
-                />
-              </div>
-
-              <Button type="submit" className="w-full">
-                Criar Lembrete
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        {/* Lista de Lembretes */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Meus Lembretes</CardTitle>
-                <CardDescription>Lembretes e follow-ups agendados</CardDescription>
-              </div>
-              <div className="flex gap-2">
-                <Select value={filtroStatus} onValueChange={(v: any) => setFiltroStatus(v)}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos</SelectItem>
-                    <SelectItem value="pendentes">Pendentes</SelectItem>
-                    <SelectItem value="concluidos">Concluídos</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={filtroPrioridade}
-                  onValueChange={(v: any) => setFiltroPrioridade(v)}
-                >
-                  <SelectTrigger className="w-[120px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todas">Todas</SelectItem>
-                    <SelectItem value="alta">Alta</SelectItem>
-                    <SelectItem value="media">Média</SelectItem>
-                    <SelectItem value="baixa">Baixa</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+      {/* Lista de Lembretes */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Meus Lembretes</CardTitle>
+              <CardDescription>Lembretes e follow-ups agendados</CardDescription>
             </div>
+            <div className="flex gap-2">
+              <Dialog open={modalAberto} onOpenChange={setModalAberto}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <IconPlus className="size-4 mr-2" />
+                    Criar Lembrete
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Criar Lembrete</DialogTitle>
+                    <DialogDescription>
+                      Agende um lembrete para contatar o cliente
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+                    {/* Cliente */}
+                    <div className="space-y-2">
+                      <Label htmlFor="clienteId">
+                        Cliente <span className="text-destructive">*</span>
+                      </Label>
+                      <Select
+                        value={formData.clienteId}
+                        onValueChange={(value) => handleSelectChange("clienteId", value)}
+                      >
+                        <SelectTrigger id="clienteId">
+                          <SelectValue placeholder="Selecione o cliente" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {clientes.map((cliente) => (
+                            <SelectItem key={cliente.id} value={cliente.id}>
+                              {cliente.nome} - {cliente.telefone}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Título */}
+                    <div className="space-y-2">
+                      <Label htmlFor="titulo">
+                        Título <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="titulo"
+                        name="titulo"
+                        value={formData.titulo}
+                        onChange={handleChange}
+                        placeholder="Ex: Ligar sobre proposta"
+                        required
+                      />
+                    </div>
+
+                    {/* Descrição */}
+                    <div className="space-y-2">
+                      <Label htmlFor="descricao">Descrição</Label>
+                      <textarea
+                        id="descricao"
+                        name="descricao"
+                        value={formData.descricao}
+                        onChange={handleChange}
+                        placeholder="Detalhes do lembrete..."
+                        className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                        rows={3}
+                      />
+                    </div>
+
+                    {/* Data */}
+                    <div className="space-y-2">
+                      <Label htmlFor="data">
+                        Data <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="data"
+                        name="data"
+                        type="date"
+                        value={formData.data}
+                        onChange={handleChange}
+                        min={new Date().toISOString().split("T")[0]}
+                        required
+                      />
+                    </div>
+
+                    {/* Tipo */}
+                    <div className="space-y-2">
+                      <Label htmlFor="tipo">Tipo</Label>
+                      <Select
+                        value={formData.tipo}
+                        onValueChange={(value) => handleSelectChange("tipo", value)}
+                      >
+                        <SelectTrigger id="tipo">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="contato">Contato</SelectItem>
+                          <SelectItem value="followup">Follow-up</SelectItem>
+                          <SelectItem value="reuniao">Reunião</SelectItem>
+                          <SelectItem value="outro">Outro</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Prioridade */}
+                    <div className="space-y-2">
+                      <Label htmlFor="prioridade">Prioridade</Label>
+                      <Select
+                        value={formData.prioridade}
+                        onValueChange={(value) => handleSelectChange("prioridade", value)}
+                      >
+                        <SelectTrigger id="prioridade">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="alta">Alta</SelectItem>
+                          <SelectItem value="media">Média</SelectItem>
+                          <SelectItem value="baixa">Baixa</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Veículo Relacionado */}
+                    <div className="space-y-2">
+                      <Label htmlFor="veiculoDescricao">Veículo Relacionado (opcional)</Label>
+                      <Input
+                        id="veiculoDescricao"
+                        name="veiculoDescricao"
+                        value={formData.veiculoDescricao}
+                        onChange={handleChange}
+                        placeholder="Ex: Toyota Corolla 2024"
+                      />
+                    </div>
+
+                    <Button type="submit" className="w-full">
+                      Criar Lembrete
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
+              <Select value={filtroStatus} onValueChange={(v: any) => setFiltroStatus(v)}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  <SelectItem value="pendentes">Pendentes</SelectItem>
+                  <SelectItem value="concluidos">Concluídos</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={filtroPrioridade}
+                onValueChange={(v: any) => setFiltroPrioridade(v)}
+              >
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todas</SelectItem>
+                  <SelectItem value="alta">Alta</SelectItem>
+                  <SelectItem value="media">Média</SelectItem>
+                  <SelectItem value="baixa">Baixa</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           </CardHeader>
           <CardContent>
             {lembretesFiltrados.length === 0 ? (
@@ -465,7 +429,7 @@ export default function LembretesPage() {
             ) : (
               <div className="space-y-3">
                 {lembretesFiltrados.map((lembrete) => {
-                  const statusData = getStatusData(lembrete.dataLembrete)
+                  const statusData = getStatusData(lembrete.data)
                   return (
                     <div
                       key={lembrete.id}
@@ -505,26 +469,19 @@ export default function LembretesPage() {
                             <div className="flex items-center gap-2 text-sm">
                               <IconUser className="size-4 text-muted-foreground" />
                               <span className="font-medium">{lembrete.clienteNome}</span>
-                              <span className="text-muted-foreground">
-                                • {lembrete.clienteTelefone}
-                              </span>
                             </div>
                             {lembrete.descricao && (
                               <p className="text-sm text-muted-foreground">{lembrete.descricao}</p>
                             )}
-                            {lembrete.veiculoRelacionado && (
+                            {lembrete.veiculoDescricao && (
                               <p className="text-sm text-muted-foreground">
-                                Veículo: {lembrete.veiculoRelacionado}
+                                Veículo: {lembrete.veiculoDescricao}
                               </p>
                             )}
                             <div className="flex items-center gap-4 text-xs text-muted-foreground">
                               <div className="flex items-center gap-1">
                                 <IconCalendar className="size-3" />
-                                <span>{formatarData(lembrete.dataLembrete)}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <IconClock className="size-3" />
-                                <span>{lembrete.hora}</span>
+                                <span>{formatarData(lembrete.data)}</span>
                               </div>
                             </div>
                           </div>
@@ -557,7 +514,6 @@ export default function LembretesPage() {
             )}
           </CardContent>
         </Card>
-      </div>
     </div>
   )
 }

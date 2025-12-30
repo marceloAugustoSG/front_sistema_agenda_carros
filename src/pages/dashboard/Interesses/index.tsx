@@ -15,25 +15,7 @@ import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { IconSearch, IconBolt, IconUser, IconCar } from "@tabler/icons-react"
 
-// Simulação de dados - em produção viria de uma API
-const clientesMock = [
-  { id: "1", nome: "João Silva", telefone: "(11) 99999-9999" },
-  { id: "2", nome: "Maria Santos", telefone: "(11) 88888-8888" },
-  { id: "3", nome: "Pedro Costa", telefone: "(11) 77777-7777" },
-  { id: "4", nome: "Ana Oliveira", telefone: "(11) 66666-6666" },
-  { id: "5", nome: "Carlos Souza", telefone: "(11) 55555-5555" },
-]
-
-const veiculosEstoqueMock = [
-  { id: "1", marca: "Toyota", modelo: "Corolla", ano: "2023", status: "disponivel", valor: "150000", cor: "Branco" },
-  { id: "2", marca: "Honda", modelo: "Civic", ano: "2024", status: "disponivel", valor: "180000", cor: "Preto" },
-  { id: "3", marca: "Ford", modelo: "Fiesta", ano: "2022", status: "vendido", valor: "80000", cor: "Prata" },
-  { id: "4", marca: "Volkswagen", modelo: "Gol", ano: "2023", status: "disponivel", valor: "70000", cor: "Vermelho" },
-  { id: "5", marca: "Toyota", modelo: "Corolla", ano: "2024", status: "disponivel", valor: "160000", cor: "Prata" },
-  { id: "6", marca: "Chevrolet", modelo: "Onix", ano: "2023", status: "disponivel", valor: "75000", cor: "Branco" },
-  { id: "7", marca: "Honda", modelo: "City", ano: "2023", status: "disponivel", valor: "95000", cor: "Branco" },
-  { id: "8", marca: "Volkswagen", modelo: "Virtus", ano: "2024", status: "disponivel", valor: "110000", cor: "Preto" },
-]
+import { getClientes, getVeiculos, getInteresses, addInteresse, updateInteresse, type Cliente, type Veiculo, type Interesse } from "@/utils/storage"
 
 export default function InteressesPage() {
   const location = useLocation()
@@ -53,12 +35,38 @@ export default function InteressesPage() {
     observacoes: "",
   })
 
+  const [clientes, setClientes] = useState<Cliente[]>([])
+  const [veiculos, setVeiculos] = useState<Veiculo[]>([])
+  const [interesses, setInteresses] = useState<Interesse[]>([])
   const [modoRapido, setModoRapido] = useState(false)
   const [buscaCliente, setBuscaCliente] = useState("")
   const [veiculoCompleto, setVeiculoCompleto] = useState("")
-  const [clientesFiltrados, setClientesFiltrados] = useState(clientesMock)
+  const [clientesFiltrados, setClientesFiltrados] = useState<Cliente[]>([])
   const [sugestoesVisiveis, setSugestoesVisiveis] = useState(false)
   const [veiculoBuscado, setVeiculoBuscado] = useState<{ marca: string; modelo: string; ano: string } | null>(null)
+
+  // Carregar dados do localStorage
+  useEffect(() => {
+    setClientes(getClientes())
+    setVeiculos(getVeiculos())
+    setInteresses(getInteresses())
+  }, [])
+
+  // Atualizar clientes filtrados quando clientes ou busca mudar
+  useEffect(() => {
+    if (buscaCliente.trim() === "") {
+      setClientesFiltrados(clientes)
+    } else {
+      const termo = buscaCliente.toLowerCase()
+      setClientesFiltrados(
+        clientes.filter(
+          (c) =>
+            c.nome.toLowerCase().includes(termo) ||
+            c.telefone.includes(termo)
+        )
+      )
+    }
+  }, [buscaCliente, clientes])
 
   // Função para extrair marca, modelo e ano do veículo
   const parsearVeiculo = (veiculoString: string) => {
@@ -76,28 +84,12 @@ export default function InteressesPage() {
   // Encontrar cliente pelo nome ou telefone
   const encontrarCliente = (nome?: string, telefone?: string) => {
     if (!nome && !telefone) return null
-    return clientesMock.find(
+    return clientes.find(
       (c) =>
         (nome && c.nome.toLowerCase().includes(nome.toLowerCase())) ||
         (telefone && c.telefone === telefone)
     )
   }
-
-  // Filtrar clientes na busca
-  useEffect(() => {
-    if (buscaCliente.trim() === "") {
-      setClientesFiltrados(clientesMock)
-    } else {
-      const termo = buscaCliente.toLowerCase()
-      setClientesFiltrados(
-        clientesMock.filter(
-          (c) =>
-            c.nome.toLowerCase().includes(termo) ||
-            c.telefone.includes(termo)
-        )
-      )
-    }
-  }, [buscaCliente])
 
   // Preencher veículo completo
   const handleVeiculoCompleto = (valor: string) => {
@@ -122,7 +114,7 @@ export default function InteressesPage() {
       return
     }
 
-    const cliente = clientesMock.find((c) => c.id === formData.clienteId)
+    const cliente = clientes.find((c) => c.id === formData.clienteId)
     if (!cliente) {
       toast.error("Cliente não encontrado")
       return
@@ -130,20 +122,25 @@ export default function InteressesPage() {
 
     const emEstoque = verificarEstoque(formData.marca, formData.modelo, formData.ano)
 
-    const novoInteresse = {
+    const novoInteresse: Interesse = {
       id: Date.now().toString(),
       clienteId: formData.clienteId,
       clienteNome: cliente.nome,
+      clienteTelefone: cliente.telefone,
       marca: formData.marca,
       modelo: formData.modelo,
       ano: formData.ano,
       cor: formData.cor || "",
-      valorMaximo: "",
-      observacoes: "",
+      valorMaximo: formData.valorMaximo || "",
+      observacoes: formData.observacoes || "",
       dataCadastro: new Date().toLocaleDateString("pt-BR"),
-      notificado: emEstoque,
+      status: emEstoque ? "atendido" : "pendente",
     }
 
+    // Salvar no localStorage
+    addInteresse(novoInteresse)
+    
+    // Atualizar estado
     setInteresses((prev) => [novoInteresse, ...prev])
 
     if (emEstoque) {
@@ -207,7 +204,7 @@ export default function InteressesPage() {
         }))
       } else if (preenchimentoAutomatico.clienteNome) {
         // Se o cliente não foi encontrado, mas temos o nome, tentar buscar de forma mais flexível
-        const clienteAlternativo = clientesMock.find((c) =>
+        const clienteAlternativo = clientes.find((c) =>
           c.nome.toLowerCase().includes(preenchimentoAutomatico.clienteNome!.toLowerCase())
         )
         if (clienteAlternativo && preenchimentoAutomatico.veiculo) {
@@ -232,19 +229,6 @@ export default function InteressesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const [interesses, setInteresses] = useState<Array<{
-    id: string
-    clienteId: string
-    clienteNome: string
-    marca: string
-    modelo: string
-    ano: string
-    cor: string
-    valorMaximo: string
-    observacoes: string
-    dataCadastro: string
-    notificado: boolean
-  }>>([])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -256,7 +240,7 @@ export default function InteressesPage() {
   }
 
   const verificarEstoque = (marca: string, modelo: string, ano: string) => {
-    return veiculosEstoqueMock.some(
+    return veiculos.some(
       (veiculo) =>
         veiculo.marca.toLowerCase() === marca.toLowerCase() &&
         veiculo.modelo.toLowerCase() === modelo.toLowerCase() &&
@@ -267,7 +251,7 @@ export default function InteressesPage() {
 
   // Buscar veículos similares disponíveis
   const buscarVeiculosSimilares = (marca: string, modelo: string, ano: string) => {
-    const veiculosDisponiveis = veiculosEstoqueMock.filter((v) => v.status === "disponivel")
+    const veiculosDisponiveis = veiculos.filter((v) => v.status === "disponivel")
     
     // Prioridade: Mesma marca, modelo similar, ano próximo
     const anoNum = parseInt(ano)
@@ -310,7 +294,7 @@ export default function InteressesPage() {
       return
     }
 
-    const cliente = clientesMock.find((c) => c.id === formData.clienteId)
+    const cliente = clientes.find((c) => c.id === formData.clienteId)
     if (!cliente) {
       toast.error("Cliente não encontrado")
       return
@@ -319,20 +303,25 @@ export default function InteressesPage() {
     // Verificar se o veículo está em estoque
     const emEstoque = verificarEstoque(formData.marca, formData.modelo, formData.ano)
 
-    const novoInteresse = {
+    const novoInteresse: Interesse = {
       id: Date.now().toString(),
       clienteId: formData.clienteId,
       clienteNome: cliente.nome,
+      clienteTelefone: cliente.telefone,
       marca: formData.marca,
       modelo: formData.modelo,
       ano: formData.ano,
-      cor: formData.cor,
-      valorMaximo: formData.valorMaximo,
-      observacoes: formData.observacoes,
+      cor: formData.cor || "",
+      valorMaximo: formData.valorMaximo || "",
+      observacoes: formData.observacoes || "",
       dataCadastro: new Date().toLocaleDateString("pt-BR"),
-      notificado: emEstoque,
+      status: emEstoque ? "atendido" : "pendente",
     }
 
+    // Salvar no localStorage
+    addInteresse(novoInteresse)
+    
+    // Atualizar estado
     setInteresses((prev) => [novoInteresse, ...prev])
 
     if (emEstoque) {
@@ -376,8 +365,12 @@ export default function InteressesPage() {
     const emEstoque = verificarEstoque(interesse.marca, interesse.modelo, interesse.ano)
 
     if (emEstoque) {
+      // Atualizar no localStorage
+      updateInteresse(interesseId, { status: "atendido" })
+      
+      // Atualizar estado
       setInteresses((prev) =>
-        prev.map((i) => (i.id === interesseId ? { ...i, notificado: true } : i))
+        prev.map((i) => (i.id === interesseId ? { ...i, status: "atendido" } : i))
       )
       toast.success(`Cliente ${interesse.clienteNome} notificado com sucesso!`)
     } else {
@@ -566,7 +559,7 @@ export default function InteressesPage() {
                       <SelectValue placeholder="Selecione o cliente" />
                     </SelectTrigger>
                     <SelectContent>
-                      {clientesMock.map((cliente) => (
+                      {clientes.map((cliente) => (
                         <SelectItem key={cliente.id} value={cliente.id}>
                           {cliente.nome} - {cliente.telefone}
                         </SelectItem>
@@ -797,10 +790,10 @@ export default function InteressesPage() {
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <h3 className="font-semibold">{interesse.clienteNome}</h3>
-                          {interesse.notificado && (
+                          {interesse.status === "atendido" && (
                             <Badge variant="default">Notificado</Badge>
                           )}
-                          {emEstoque && !interesse.notificado && (
+                          {emEstoque && interesse.status !== "atendido" && (
                             <Badge variant="default" className="bg-green-600">
                               Disponível
                             </Badge>

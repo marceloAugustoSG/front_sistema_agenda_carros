@@ -13,15 +13,24 @@ import {
 } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
-import {
-  IconCar,
-  IconSearch,
-  IconPackage,
-} from "@tabler/icons-react"
-import { getVeiculos, addVeiculo, saveVeiculos, type Veiculo } from "@/utils/storage"
+import { IconSearch } from "@tabler/icons-react"
+import { getVeiculos, addVeiculo, type Veiculo } from "@/utils/storage"
+
+type FormDataVeiculo = {
+  marca: string
+  modelo: string
+  ano: string
+  placa: string
+  cor: string
+  chassi: string
+  valor: string
+  combustivel: string
+  quilometragem: string
+  status: Veiculo["status"]
+}
 
 export default function VeiculosPage() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormDataVeiculo>({
     marca: "",
     modelo: "",
     ano: "",
@@ -31,12 +40,12 @@ export default function VeiculosPage() {
     valor: "",
     combustivel: "",
     quilometragem: "",
-    status: "disponivel" as Veiculo["status"],
+    status: "disponivel",
   })
 
   const [veiculos, setVeiculos] = useState<Veiculo[]>([])
-  const [busca, setBusca] = useState("")
-  const [filtroStatus, setFiltroStatus] = useState("todos")
+  const [busca, setBusca] = useState<string>("")
+  const [filtroStatus, setFiltroStatus] = useState<string>("todos")
 
   // Carregar veículos do localStorage ao montar o componente
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -6,218 +6,66 @@ import { Input } from "@/components/ui/input"
 import { IconTrendingUp, IconTrendingDown, IconBell, IconClock, IconCheck, IconSearch, IconCar, IconPhone, IconAlertCircle, IconChecklist } from "@tabler/icons-react"
 import { Link } from "react-router-dom"
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from "recharts"
+import { getVeiculos, getClientes, getInteresses, getPropostas, type Veiculo } from "@/utils/storage"
 
-// Dados mockados de veículos em estoque
-const veiculosEstoque = [
-  {
-    id: "1",
-    marca: "Toyota",
-    modelo: "Corolla",
-    ano: "2023",
-    placa: "ABC-1234",
-    cor: "Branco",
-    valor: "150000",
-    status: "disponivel",
-  },
-  {
-    id: "2",
-    marca: "Honda",
-    modelo: "Civic",
-    ano: "2024",
-    placa: "DEF-5678",
-    cor: "Preto",
-    valor: "180000",
-    status: "disponivel",
-  },
-  {
-    id: "3",
-    marca: "Ford",
-    modelo: "Fiesta",
-    ano: "2022",
-    placa: "GHI-9012",
-    cor: "Prata",
-    valor: "80000",
-    status: "vendido",
-  },
-  {
-    id: "4",
-    marca: "Volkswagen",
-    modelo: "Gol",
-    ano: "2023",
-    placa: "JKL-3456",
-    cor: "Vermelho",
-    valor: "70000",
-    status: "disponivel",
-  },
-  {
-    id: "5",
-    marca: "Toyota",
-    modelo: "Corolla",
-    ano: "2024",
-    placa: "MNO-7890",
-    cor: "Prata",
-    valor: "160000",
-    status: "disponivel",
-  },
-  {
-    id: "6",
-    marca: "Chevrolet",
-    modelo: "Onix",
-    ano: "2023",
-    placa: "PQR-1234",
-    cor: "Branco",
-    valor: "75000",
-    status: "disponivel",
-  },
-]
+export default function HomePage() {
+  const [veiculos, setVeiculos] = useState<Veiculo[]>([])
+  const [clientes, setClientes] = useState([])
+  const [interesses, setInteresses] = useState([])
+  const [propostas, setPropostas] = useState([])
 
-// Dados mockados
-const resumoHoje = {
-  vendas: 3,
-  clientesCadastrados: 5,
-  interessesCadastrados: 8,
-  veiculosAdicionados: 2,
-}
+  useEffect(() => {
+    setVeiculos(getVeiculos())
+    setClientes(getClientes())
+    setInteresses(getInteresses())
+    setPropostas(getPropostas())
+  }, [])
 
-const totais = {
-  clientesAtivos: 127,
-  veiculosDisponiveis: 45,
-  interessesAbertos: 23,
-  taxaConversao: 18.5,
-}
+  const resumoHoje = {
+    vendas: propostas.filter((p: any) => p.status === "aceita").length,
+    clientesCadastrados: clientes.length,
+    interessesCadastrados: interesses.length,
+    veiculosAdicionados: veiculos.length,
+  }
 
-const interessesPendentes = [
-  {
-    id: "1",
-    clienteNome: "João Silva",
-    veiculo: "Toyota Corolla 2024",
-    telefone: "(11) 99999-9999",
-    dataCadastro: "Hoje, 14:30",
-    disponivel: true,
-  },
-  {
-    id: "2",
-    clienteNome: "Maria Santos",
-    veiculo: "Honda Civic 2023",
-    telefone: "(11) 88888-8888",
-    dataCadastro: "Hoje, 10:15",
-    disponivel: true,
-  },
-  {
-    id: "3",
-    clienteNome: "Pedro Costa",
-    veiculo: "Ford Fiesta 2022",
-    telefone: "(11) 77777-7777",
-    dataCadastro: "Ontem, 16:45",
-    disponivel: false,
-  },
-]
+  const totais = {
+    clientesAtivos: clientes.length,
+    veiculosDisponiveis: veiculos.filter((v) => v.status === "disponivel").length,
+    interessesAbertos: interesses.filter((i: any) => i.status === "pendente").length,
+    taxaConversao: interesses.length > 0 ? ((propostas.filter((p: any) => p.status === "aceita").length / interesses.length) * 100).toFixed(1) : "0",
+  }
 
-const atividadesRecentes = [
-  {
-    tipo: "cliente",
-    descricao: "Novo cliente cadastrado: Ana Oliveira",
-    tempo: "há 15 minutos",
-  },
-  {
-    tipo: "interesse",
-    descricao: "Interesse registrado: Volkswagen Gol 2023",
-    tempo: "há 32 minutos",
-  },
-  {
-    tipo: "venda",
-    descricao: "Venda realizada: Toyota Corolla 2023",
-    tempo: "há 1 hora",
-  },
-  {
-    tipo: "notificacao",
-    descricao: "Cliente notificado: João Silva - Honda Civic disponível",
-    tempo: "há 2 horas",
-  },
-  {
-    tipo: "veiculo",
-    descricao: "Novo veículo adicionado: Ford Ranger 2024",
-    tempo: "há 3 horas",
-  },
-]
+  const interessesPendentes = interesses
+    .filter((i: any) => i.status === "pendente")
+    .slice(0, 5)
+    .map((i: any) => ({
+      id: i.id,
+      clienteNome: i.clienteNome,
+      veiculo: `${i.marca} ${i.modelo} ${i.ano}`,
+      telefone: i.clienteTelefone,
+      dataCadastro: i.dataCadastro,
+      disponivel: veiculos.some(
+        (v) =>
+          v.marca.toLowerCase() === i.marca.toLowerCase() &&
+          v.modelo.toLowerCase() === i.modelo.toLowerCase() &&
+          v.ano === i.ano &&
+          v.status === "disponivel"
+      ),
+    }))
 
-const vendasUltimos7Dias = [
-  { dia: "Seg", vendas: 2 },
-  { dia: "Ter", vendas: 4 },
-  { dia: "Qua", vendas: 3 },
-  { dia: "Qui", vendas: 5 },
-  { dia: "Sex", vendas: 6 },
-  { dia: "Sáb", vendas: 4 },
-  { dia: "Dom", vendas: 3 },
-]
+  const veiculosRecentes = veiculos.slice(0, 5)
 
-// Ações do dia - tarefas prioritárias para o vendedor
-const acoesDoDia = [
-  {
-    id: "1",
-    tipo: "notificar",
-    prioridade: "alta",
-    titulo: "Notificar cliente - Veículo disponível",
-    descricao: "João Silva - Toyota Corolla 2024 está disponível",
-    cliente: "João Silva",
-    telefone: "(11) 99999-9999",
-    veiculo: "Toyota Corolla 2024",
-    tempo: "Urgente",
-    acao: "notificar",
-  },
-  {
-    id: "2",
-    tipo: "ligar",
-    prioridade: "alta",
-    titulo: "Ligar para cliente",
-    descricao: "Maria Santos - 3 dias sem contato",
-    cliente: "Maria Santos",
-    telefone: "(11) 88888-8888",
-    veiculo: "Honda Civic 2023",
-    tempo: "Hoje",
-    acao: "ligar",
-  },
-  {
-    id: "3",
-    tipo: "notificar",
-    prioridade: "media",
-    titulo: "Notificar cliente - Veículo disponível",
-    descricao: "Pedro Costa - Novo veículo chegou ao estoque",
-    cliente: "Pedro Costa",
-    telefone: "(11) 77777-7777",
-    veiculo: "Volkswagen Gol 2023",
-    tempo: "Hoje",
-    acao: "notificar",
-  },
-  {
-    id: "4",
-    tipo: "followup",
-    prioridade: "media",
-    titulo: "Follow-up pendente",
-    descricao: "Ana Oliveira - Interesse registrado há 2 dias",
-    cliente: "Ana Oliveira",
-    telefone: "(11) 66666-6666",
-    veiculo: "Ford Fiesta 2022",
-    tempo: "Hoje",
-    acao: "followup",
-  },
-  {
-    id: "5",
-    tipo: "lembrete",
-    prioridade: "baixa",
-    titulo: "Lembrete",
-    descricao: "Carlos Souza aguarda proposta - Enviar até hoje",
-    cliente: "Carlos Souza",
-    telefone: "(11) 55555-5555",
-    veiculo: "Chevrolet Onix 2023",
-    tempo: "Hoje",
-    acao: "lembrete",
-  },
-]
+  const propostasPendentes = propostas.filter((p: any) => p.status === "pendente").slice(0, 5)
 
-export default function DashboardHome() {
+  const atividadesRecentes: any[] = []
+
+  const vendasUltimos7Dias: any[] = []
+
+  // Ações do dia - tarefas prioritárias para o vendedor
+  const acoesDoDia: any[] = []
+
   const [buscaRapida, setBuscaRapida] = useState("")
-  const [resultadosBusca, setResultadosBusca] = useState<typeof veiculosEstoque>([])
+  const [resultadosBusca, setResultadosBusca] = useState<Veiculo[]>([])
 
   const handleBusca = (valor: string) => {
     setBuscaRapida(valor)
@@ -228,7 +76,7 @@ export default function DashboardHome() {
     }
 
     const termo = valor.toLowerCase().trim()
-    const resultados = veiculosEstoque.filter(
+    const resultados = veiculos.filter(
       (veiculo) =>
         veiculo.marca.toLowerCase().includes(termo) ||
         veiculo.modelo.toLowerCase().includes(termo) ||
@@ -300,7 +148,7 @@ export default function DashboardHome() {
                           </div>
                           {veiculo.status === "disponivel" && (
                             <Button size="sm" variant="outline" asChild className="ml-2">
-                              <Link to="/dashboard/estoque">Ver Detalhes</Link>
+                              <Link to="/dashboard/veiculos">Ver Detalhes</Link>
                             </Button>
                           )}
                         </div>

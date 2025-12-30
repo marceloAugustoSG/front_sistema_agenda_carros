@@ -16,6 +16,7 @@ export function NavMain({
     title: string
     url: string
     icon?: Icon
+    color?: string
   }[]
 }) {
   const location = useLocation()
@@ -54,7 +55,7 @@ export function NavMain({
                   isActive={isActive}
                 >
                   <Link to={item.url}>
-                    {item.icon && <item.icon />}
+                    {item.icon && <item.icon className={item.color || "text-muted-foreground"} />}
                     <span>{item.title}</span>
                   </Link>
                 </SidebarMenuButton>
