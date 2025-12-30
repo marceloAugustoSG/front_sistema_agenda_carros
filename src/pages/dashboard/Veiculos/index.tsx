@@ -11,9 +11,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { toast } from "sonner"
-import { IconSearch } from "@tabler/icons-react"
+import { IconSearch, IconPlus } from "@tabler/icons-react"
 import { getVeiculos, addVeiculo, type Veiculo } from "@/utils/storage"
 
 type FormDataVeiculo = {
@@ -46,6 +53,7 @@ export default function VeiculosPage() {
   const [veiculos, setVeiculos] = useState<Veiculo[]>([])
   const [busca, setBusca] = useState<string>("")
   const [filtroStatus, setFiltroStatus] = useState<string>("todos")
+  const [modalAberto, setModalAberto] = useState<boolean>(false)
 
   // Carregar veículos do localStorage ao montar o componente
   useEffect(() => {
@@ -101,7 +109,7 @@ export default function VeiculosPage() {
     setVeiculos((prev) => [novoVeiculo, ...prev])
     toast.success("Veículo cadastrado com sucesso!")
     
-    // Limpar formulário
+    // Limpar formulário e fechar modal
     setFormData({
       marca: "",
       modelo: "",
@@ -114,6 +122,7 @@ export default function VeiculosPage() {
       quilometragem: "",
       status: "disponivel",
     })
+    setModalAberto(false)
   }
 
   const veiculosFiltrados = veiculos.filter((veiculo) => {
@@ -157,18 +166,216 @@ export default function VeiculosPage() {
 
   return (
     <div className="px-4 lg:px-6 space-y-6">
-      <Tabs defaultValue="lista" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="lista">Lista de Veículos</TabsTrigger>
-          <TabsTrigger value="cadastro">Cadastrar Veículo</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="lista" className="space-y-4">
-          <Card>
-            <CardHeader>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
               <CardTitle>Veículos Cadastrados</CardTitle>
               <CardDescription>Visualize e gerencie seus veículos</CardDescription>
-            </CardHeader>
+            </div>
+            <Dialog open={modalAberto} onOpenChange={setModalAberto}>
+              <DialogTrigger asChild>
+                <Button>
+                  <IconPlus className="size-4 mr-2" />
+                  Cadastrar Veículo
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Cadastrar Veículo</DialogTitle>
+                  <DialogDescription>
+                    Preencha os dados do veículo para adicioná-lo ao sistema
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Marca */}
+                    <div className="space-y-2">
+                      <Label htmlFor="marca">
+                        Marca <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="marca"
+                        name="marca"
+                        value={formData.marca}
+                        onChange={handleChange}
+                        placeholder="Ex: Toyota, Honda, Ford..."
+                        required
+                      />
+                    </div>
+
+                    {/* Modelo */}
+                    <div className="space-y-2">
+                      <Label htmlFor="modelo">
+                        Modelo <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="modelo"
+                        name="modelo"
+                        value={formData.modelo}
+                        onChange={handleChange}
+                        placeholder="Ex: Corolla, Civic, Fiesta..."
+                        required
+                      />
+                    </div>
+
+                    {/* Ano */}
+                    <div className="space-y-2">
+                      <Label htmlFor="ano">
+                        Ano <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="ano"
+                        name="ano"
+                        type="number"
+                        value={formData.ano}
+                        onChange={handleChange}
+                        placeholder="Ex: 2024"
+                        min="1900"
+                        max={new Date().getFullYear() + 1}
+                        required
+                      />
+                    </div>
+
+                    {/* Placa */}
+                    <div className="space-y-2">
+                      <Label htmlFor="placa">
+                        Placa <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="placa"
+                        name="placa"
+                        value={formData.placa}
+                        onChange={handleChange}
+                        placeholder="Ex: ABC-1234"
+                        maxLength={8}
+                        required
+                      />
+                    </div>
+
+                    {/* Cor */}
+                    <div className="space-y-2">
+                      <Label htmlFor="cor">Cor</Label>
+                      <Input
+                        id="cor"
+                        name="cor"
+                        value={formData.cor}
+                        onChange={handleChange}
+                        placeholder="Ex: Branco, Preto, Prata..."
+                      />
+                    </div>
+
+                    {/* Chassi */}
+                    <div className="space-y-2">
+                      <Label htmlFor="chassi">Chassi</Label>
+                      <Input
+                        id="chassi"
+                        name="chassi"
+                        value={formData.chassi}
+                        onChange={handleChange}
+                        placeholder="Número do chassi"
+                        maxLength={17}
+                      />
+                    </div>
+
+                    {/* Valor */}
+                    <div className="space-y-2">
+                      <Label htmlFor="valor">Valor (R$)</Label>
+                      <Input
+                        id="valor"
+                        name="valor"
+                        type="number"
+                        value={formData.valor}
+                        onChange={handleChange}
+                        placeholder="0.00"
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+
+                    {/* Combustível */}
+                    <div className="space-y-2">
+                      <Label htmlFor="combustivel">Tipo de Combustível</Label>
+                      <Select
+                        value={formData.combustivel}
+                        onValueChange={(value) => handleSelectChange("combustivel", value)}
+                      >
+                        <SelectTrigger id="combustivel">
+                          <SelectValue placeholder="Selecione o tipo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="flex">Flex</SelectItem>
+                          <SelectItem value="gasolina">Gasolina</SelectItem>
+                          <SelectItem value="etanol">Etanol</SelectItem>
+                          <SelectItem value="diesel">Diesel</SelectItem>
+                          <SelectItem value="eletrico">Elétrico</SelectItem>
+                          <SelectItem value="hibrido">Híbrido</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Quilometragem */}
+                    <div className="space-y-2">
+                      <Label htmlFor="quilometragem">Quilometragem</Label>
+                      <Input
+                        id="quilometragem"
+                        name="quilometragem"
+                        type="number"
+                        value={formData.quilometragem}
+                        onChange={handleChange}
+                        placeholder="0"
+                        min="0"
+                      />
+                    </div>
+
+                    {/* Status */}
+                    <div className="space-y-2">
+                      <Label htmlFor="status">Status</Label>
+                      <Select
+                        value={formData.status}
+                        onValueChange={(value) => handleSelectChange("status", value)}
+                      >
+                        <SelectTrigger id="status">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="disponivel">Disponível</SelectItem>
+                          <SelectItem value="reservado">Reservado</SelectItem>
+                          <SelectItem value="vendido">Vendido</SelectItem>
+                          <SelectItem value="manutencao">Em Manutenção</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-4 pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setFormData({
+                          marca: "",
+                          modelo: "",
+                          ano: "",
+                          placa: "",
+                          cor: "",
+                          chassi: "",
+                          valor: "",
+                          combustivel: "",
+                          quilometragem: "",
+                          status: "disponivel",
+                        })
+                      }}
+                    >
+                      Limpar
+                    </Button>
+                    <Button type="submit">Adicionar Veículo</Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </CardHeader>
             <CardContent>
               {/* Filtros */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -284,206 +491,6 @@ export default function VeiculosPage() {
               )}
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="cadastro">
-          <Card>
-            <CardHeader>
-              <CardTitle>Cadastrar Veículo</CardTitle>
-              <CardDescription>
-                Preencha os dados do veículo para adicioná-lo ao sistema
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Marca */}
-                  <div className="space-y-2">
-                    <Label htmlFor="marca">
-                      Marca <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="marca"
-                      name="marca"
-                      value={formData.marca}
-                      onChange={handleChange}
-                      placeholder="Ex: Toyota, Honda, Ford..."
-                      required
-                    />
-                  </div>
-
-                  {/* Modelo */}
-                  <div className="space-y-2">
-                    <Label htmlFor="modelo">
-                      Modelo <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="modelo"
-                      name="modelo"
-                      value={formData.modelo}
-                      onChange={handleChange}
-                      placeholder="Ex: Corolla, Civic, Fiesta..."
-                      required
-                    />
-                  </div>
-
-                  {/* Ano */}
-                  <div className="space-y-2">
-                    <Label htmlFor="ano">
-                      Ano <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="ano"
-                      name="ano"
-                      type="number"
-                      value={formData.ano}
-                      onChange={handleChange}
-                      placeholder="Ex: 2024"
-                      min="1900"
-                      max={new Date().getFullYear() + 1}
-                      required
-                    />
-                  </div>
-
-                  {/* Placa */}
-                  <div className="space-y-2">
-                    <Label htmlFor="placa">
-                      Placa <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="placa"
-                      name="placa"
-                      value={formData.placa}
-                      onChange={handleChange}
-                      placeholder="Ex: ABC-1234"
-                      maxLength={8}
-                      required
-                    />
-                  </div>
-
-                  {/* Cor */}
-                  <div className="space-y-2">
-                    <Label htmlFor="cor">Cor</Label>
-                    <Input
-                      id="cor"
-                      name="cor"
-                      value={formData.cor}
-                      onChange={handleChange}
-                      placeholder="Ex: Branco, Preto, Prata..."
-                    />
-                  </div>
-
-                  {/* Chassi */}
-                  <div className="space-y-2">
-                    <Label htmlFor="chassi">Chassi</Label>
-                    <Input
-                      id="chassi"
-                      name="chassi"
-                      value={formData.chassi}
-                      onChange={handleChange}
-                      placeholder="Número do chassi"
-                      maxLength={17}
-                    />
-                  </div>
-
-                  {/* Valor */}
-                  <div className="space-y-2">
-                    <Label htmlFor="valor">Valor (R$)</Label>
-                    <Input
-                      id="valor"
-                      name="valor"
-                      type="number"
-                      value={formData.valor}
-                      onChange={handleChange}
-                      placeholder="0.00"
-                      min="0"
-                      step="0.01"
-                    />
-                  </div>
-
-                  {/* Combustível */}
-                  <div className="space-y-2">
-                    <Label htmlFor="combustivel">Tipo de Combustível</Label>
-                    <Select
-                      value={formData.combustivel}
-                      onValueChange={(value) => handleSelectChange("combustivel", value)}
-                    >
-                      <SelectTrigger id="combustivel">
-                        <SelectValue placeholder="Selecione o tipo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="flex">Flex</SelectItem>
-                        <SelectItem value="gasolina">Gasolina</SelectItem>
-                        <SelectItem value="etanol">Etanol</SelectItem>
-                        <SelectItem value="diesel">Diesel</SelectItem>
-                        <SelectItem value="eletrico">Elétrico</SelectItem>
-                        <SelectItem value="hibrido">Híbrido</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Quilometragem */}
-                  <div className="space-y-2">
-                    <Label htmlFor="quilometragem">Quilometragem</Label>
-                    <Input
-                      id="quilometragem"
-                      name="quilometragem"
-                      type="number"
-                      value={formData.quilometragem}
-                      onChange={handleChange}
-                      placeholder="0"
-                      min="0"
-                    />
-                  </div>
-
-                  {/* Status */}
-                  <div className="space-y-2">
-                    <Label htmlFor="status">Status</Label>
-                    <Select
-                      value={formData.status}
-                      onValueChange={(value) => handleSelectChange("status", value)}
-                    >
-                      <SelectTrigger id="status">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="disponivel">Disponível</SelectItem>
-                        <SelectItem value="reservado">Reservado</SelectItem>
-                        <SelectItem value="vendido">Vendido</SelectItem>
-                        <SelectItem value="manutencao">Em Manutenção</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-4 pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setFormData({
-                        marca: "",
-                        modelo: "",
-                        ano: "",
-                        placa: "",
-                        cor: "",
-                        chassi: "",
-                        valor: "",
-                        combustivel: "",
-                        quilometragem: "",
-                        status: "disponivel",
-                      })
-                    }}
-                  >
-                    Limpar
-                  </Button>
-                  <Button type="submit">Adicionar Veículo</Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
     </div>
   )
 }

@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom"
 import {
   IconCreditCard,
   IconDotsVertical,
@@ -26,6 +27,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { logout } from "@/utils/auth"
+import { toast } from "sonner"
 
 export function NavUser({
   user,
@@ -37,6 +40,13 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    logout()
+    toast.success("Logout realizado com sucesso!")
+    navigate("/login")
+  }
 
   return (
     <SidebarMenu>
@@ -96,9 +106,9 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>
               <IconLogout />
-             Sair
+              Sair
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

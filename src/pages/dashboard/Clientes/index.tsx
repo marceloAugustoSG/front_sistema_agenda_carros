@@ -14,21 +14,32 @@ import {
   IconCar,
   IconBell,
   IconCheck,
+  IconPlus,
 } from "@tabler/icons-react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { getClientes, addCliente, type Cliente } from "@/utils/storage"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import {
+  getClientes,
+  addCliente,
+  getInteresses,
+  getPropostas,
+  getLembretes,
+  type Cliente,
+} from "@/utils/storage"
 
-// Histórico de interações (vazio por padrão, será preenchido conforme uso)
-const historicoMock: Record<
-  string,
-  Array<{
-    id: string
-    tipo: "interesse" | "contato" | "venda" | "notificacao" | "cadastro"
-    descricao: string
-    data: string
-    detalhes?: string
-  }>
-> = {}
+type HistoricoItem = {
+  id: string
+  tipo: "interesse" | "contato" | "venda" | "notificacao" | "cadastro" | "followup" | "reuniao" | "outro"
+  descricao: string
+  data: string
+  detalhes?: string
+}
 
 type FormDataCliente = {
   nome: string
@@ -52,12 +63,95 @@ export default function ClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [busca, setBusca] = useState<string>("")
   const [clienteSelecionado, setClienteSelecionado] = useState<string | null>(null)
+  const [modalAberto, setModalAberto] = useState<boolean>(false)
 
   // Carregar clientes do localStorage ao montar o componente
   useEffect(() => {
     const clientesCarregados = getClientes()
     setClientes(clientesCarregados)
   }, [])
+
+  // Função para buscar histórico do cliente
+  const getHistoricoCliente = (clienteId: string): HistoricoItem[] => {
+    const historico: HistoricoItem[] = []
+    const interesses = getInteresses()
+    const propostas = getPropostas()
+    const lembretes = getLembretes()
+    const cliente = clientes.find((c) => c.id === clienteId)
+
+    if (!cliente) return historico
+
+    // 1. Cadastro do cliente
+    historico.push({
+      id: `cadastro-${cliente.id}`,
+      tipo: "cadastro",
+      descricao: "Cliente cadastrado no sistema",
+      data: cliente.dataCadastro,
+      detalhes: `Telefone: ${cliente.telefone}${cliente.email ? ` | Email: ${cliente.email}` : ""}`,
+    })
+
+    // 2. Interesses do cliente
+    interesses
+      .filter((i) => i.clienteId === clienteId)
+      .forEach((interesse) => {
+        historico.push({
+          id: `interesse-${interesse.id}`,
+          tipo: "interesse",
+          descricao: `Interesse em ${interesse.marca} ${interesse.modelo} ${interesse.ano}`,
+          data: interesse.dataCadastro,
+          detalhes: interesse.observacoes || undefined,
+        })
+      })
+
+    // 3. Propostas do cliente
+    propostas
+      .filter((p) => p.clienteId === clienteId)
+      .forEach((proposta) => {
+        const tipo = proposta.status === "aceita" ? "venda" : "contato"
+        historico.push({
+          id: `proposta-${proposta.id}`,
+          tipo,
+          descricao: `Proposta ${proposta.numero} - ${proposta.veiculoDescricao}`,
+          data: proposta.dataCriacao,
+          detalhes: `Valor: R$ ${parseFloat(proposta.valorFinal).toLocaleString("pt-BR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })} | Status: ${proposta.status}`,
+        })
+      })
+
+    // 4. Lembretes do cliente
+    lembretes
+      .filter((l) => l.clienteId === clienteId)
+      .forEach((lembrete) => {
+        historico.push({
+          id: `lembrete-${lembrete.id}`,
+          tipo: lembrete.tipo,
+          descricao: lembrete.titulo,
+          data: lembrete.dataCriacao,
+          detalhes: lembrete.descricao || undefined,
+        })
+      })
+
+    // Ordenar por data (mais recente primeiro)
+    return historico.sort((a, b) => {
+      // Converter datas no formato brasileiro (dd/mm/yyyy) ou ISO (yyyy-mm-dd)
+      const parseDate = (dateStr: string): Date => {
+        if (dateStr.includes("/")) {
+          // Formato brasileiro: dd/mm/yyyy
+          const [dia, mes, ano] = dateStr.split("/")
+          return new Date(`${ano}-${mes}-${dia}`)
+        } else {
+          // Formato ISO: yyyy-mm-dd
+          return new Date(dateStr)
+        }
+      }
+      
+      const dataA = parseDate(a.data)
+      const dataB = parseDate(b.data)
+      return dataB.getTime() - dataA.getTime()
+    })
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -107,6 +201,7 @@ export default function ClientesPage() {
       endereco: "",
       observacoes: "",
     })
+    setModalAberto(false)
   }
 
   const clientesFiltrados = clientes.filter(
@@ -120,7 +215,7 @@ export default function ClientesPage() {
     ? clientes.find((c) => c.id === clienteSelecionado)
     : null
 
-  const historicoCliente = clienteAtual ? historicoMock[clienteAtual.id] || [] : []
+  const historicoCliente = clienteSelecionado ? getHistoricoCliente(clienteSelecionado) : []
 
   const getIconTipo = (tipo: string) => {
     switch (tipo) {
@@ -134,6 +229,12 @@ export default function ClientesPage() {
         return <IconBell className="size-4 text-yellow-600" />
       case "cadastro":
         return <IconUser className="size-4 text-purple-600" />
+      case "followup":
+        return <IconPhone className="size-4 text-blue-600" />
+      case "reuniao":
+        return <IconCheck className="size-4 text-indigo-600" />
+      case "outro":
+        return <IconClock className="size-4 text-gray-600" />
       default:
         return <IconClock className="size-4 text-gray-600" />
     }
@@ -151,6 +252,12 @@ export default function ClientesPage() {
         return <Badge variant="outline" className="bg-yellow-50 text-yellow-700">Notificação</Badge>
       case "cadastro":
         return <Badge variant="outline" className="bg-purple-50 text-purple-700">Cadastro</Badge>
+      case "followup":
+        return <Badge variant="outline" className="bg-blue-50 text-blue-700">Follow-up</Badge>
+      case "reuniao":
+        return <Badge variant="outline" className="bg-indigo-50 text-indigo-700">Reunião</Badge>
+      case "outro":
+        return <Badge variant="outline">Outro</Badge>
       default:
         return <Badge variant="outline">Outro</Badge>
     }
@@ -158,18 +265,137 @@ export default function ClientesPage() {
 
   return (
     <div className="px-4 lg:px-6 space-y-6">
-      <Tabs defaultValue="lista" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="lista">Lista de Clientes</TabsTrigger>
-          <TabsTrigger value="cadastro">Cadastrar Cliente</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="lista" className="space-y-4">
-          <Card>
-            <CardHeader>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
               <CardTitle>Clientes Cadastrados</CardTitle>
               <CardDescription>Visualize e gerencie seus clientes</CardDescription>
-            </CardHeader>
+            </div>
+            <Dialog open={modalAberto} onOpenChange={setModalAberto}>
+              <DialogTrigger asChild>
+                <Button>
+                  <IconPlus className="size-4 mr-2" />
+                  Cadastrar Cliente
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Cadastrar Cliente</DialogTitle>
+                  <DialogDescription>
+                    Cadastre informações de possíveis compradores
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Nome */}
+                    <div className="space-y-2">
+                      <Label htmlFor="nome">
+                        Nome Completo <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="nome"
+                        name="nome"
+                        value={formData.nome}
+                        onChange={handleChange}
+                        placeholder="Ex: João Silva"
+                        required
+                      />
+                    </div>
+
+                    {/* Telefone */}
+                    <div className="space-y-2">
+                      <Label htmlFor="telefone">
+                        Telefone <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="telefone"
+                        name="telefone"
+                        type="tel"
+                        value={formData.telefone}
+                        onChange={handleChange}
+                        placeholder="Ex: (11) 99999-9999"
+                        required
+                      />
+                    </div>
+
+                    {/* Email */}
+                    <div className="space-y-2">
+                      <Label htmlFor="email">E-mail</Label>
+                      <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        placeholder="Ex: joao@email.com"
+                      />
+                    </div>
+
+                    {/* CPF */}
+                    <div className="space-y-2">
+                      <Label htmlFor="cpf">CPF</Label>
+                      <Input
+                        id="cpf"
+                        name="cpf"
+                        value={formData.cpf}
+                        onChange={handleChange}
+                        placeholder="Ex: 000.000.000-00"
+                        maxLength={14}
+                      />
+                    </div>
+
+                    {/* Endereço */}
+                    <div className="space-y-2 md:col-span-2">
+                      <Label htmlFor="endereco">Endereço</Label>
+                      <Input
+                        id="endereco"
+                        name="endereco"
+                        value={formData.endereco}
+                        onChange={handleChange}
+                        placeholder="Ex: Rua Exemplo, 123 - Bairro - Cidade/UF"
+                      />
+                    </div>
+
+                    {/* Observações */}
+                    <div className="space-y-2 md:col-span-2">
+                      <Label htmlFor="observacoes">Observações</Label>
+                      <textarea
+                        id="observacoes"
+                        name="observacoes"
+                        value={formData.observacoes}
+                        onChange={handleChange}
+                        placeholder="Anotações sobre o cliente, preferências, etc."
+                        className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                        rows={4}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-4 pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setFormData({
+                          nome: "",
+                          telefone: "",
+                          email: "",
+                          cpf: "",
+                          endereco: "",
+                          observacoes: "",
+                        })
+                      }}
+                    >
+                      Limpar
+                    </Button>
+                    <Button type="submit">Cadastrar Cliente</Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </CardHeader>
             <CardContent>
               {/* Busca */}
               <div className="relative mb-6">
@@ -303,127 +529,6 @@ export default function ClientesPage() {
               )}
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="cadastro">
-          <Card>
-            <CardHeader>
-              <CardTitle>Cadastrar Cliente</CardTitle>
-              <CardDescription>
-                Cadastre informações de possíveis compradores
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Nome */}
-                  <div className="space-y-2">
-                    <Label htmlFor="nome">
-                      Nome Completo <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="nome"
-                      name="nome"
-                      value={formData.nome}
-                      onChange={handleChange}
-                      placeholder="Ex: João Silva"
-                      required
-                    />
-                  </div>
-
-                  {/* Telefone */}
-                  <div className="space-y-2">
-                    <Label htmlFor="telefone">
-                      Telefone <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="telefone"
-                      name="telefone"
-                      type="tel"
-                      value={formData.telefone}
-                      onChange={handleChange}
-                      placeholder="Ex: (11) 99999-9999"
-                      required
-                    />
-                  </div>
-
-                  {/* Email */}
-                  <div className="space-y-2">
-                    <Label htmlFor="email">E-mail</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      placeholder="Ex: joao@email.com"
-                    />
-                  </div>
-
-                  {/* CPF */}
-                  <div className="space-y-2">
-                    <Label htmlFor="cpf">CPF</Label>
-                    <Input
-                      id="cpf"
-                      name="cpf"
-                      value={formData.cpf}
-                      onChange={handleChange}
-                      placeholder="Ex: 000.000.000-00"
-                      maxLength={14}
-                    />
-                  </div>
-
-                  {/* Endereço */}
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="endereco">Endereço</Label>
-                    <Input
-                      id="endereco"
-                      name="endereco"
-                      value={formData.endereco}
-                      onChange={handleChange}
-                      placeholder="Ex: Rua Exemplo, 123 - Bairro - Cidade/UF"
-                    />
-                  </div>
-
-                  {/* Observações */}
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="observacoes">Observações</Label>
-                    <textarea
-                      id="observacoes"
-                      name="observacoes"
-                      value={formData.observacoes}
-                      onChange={handleChange}
-                      placeholder="Anotações sobre o cliente, preferências, etc."
-                      className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                      rows={4}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-4 pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setFormData({
-                        nome: "",
-                        telefone: "",
-                        email: "",
-                        cpf: "",
-                        endereco: "",
-                        observacoes: "",
-                      })
-                    }}
-                  >
-                    Limpar
-                  </Button>
-                  <Button type="submit">Cadastrar Cliente</Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
     </div>
   )
 }

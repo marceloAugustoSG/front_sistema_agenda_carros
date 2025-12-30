@@ -50,7 +50,7 @@ const interessesVsVendas = [
   { mes: "Fev", interesses: 72, vendas: 15, taxa: 20.8 },
   { mes: "Mar", interesses: 85, vendas: 18, taxa: 21.2 },
   { mes: "Abr", interesses: 92, vendas: 22, taxa: 23.9 },
-  { mes: "Mai", vendas: 88, interesses: 20, taxa: 22.7 },
+  { mes: "Mai", interesses: 88, vendas: 20, taxa: 22.7 },
   { mes: "Jun", interesses: 105, vendas: 25, taxa: 23.8 },
 ]
 
@@ -165,37 +165,55 @@ export default function EstatisticasPage() {
             <CardDescription>Evolução de vendas nos últimos 6 meses</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={vendasPorPeriodo}>
-                <defs>
-                  <linearGradient id="colorVendas" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis
-                  dataKey="mes"
-                  className="text-xs"
-                  tick={{ fill: "hsl(var(--muted-foreground))" }}
-                />
-                <YAxis className="text-xs" tick={{ fill: "hsl(var(--muted-foreground))" }} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--background))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "6px",
-                  }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="vendas"
-                  stroke="#3b82f6"
-                  fillOpacity={1}
-                  fill="url(#colorVendas)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            <div style={{ width: "100%", height: "300px", minHeight: "300px" }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={vendasPorPeriodo}
+                  margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                  style={{ cursor: "default" }}
+                >
+                  <defs>
+                    <linearGradient id="colorVendasEstatisticas" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="hsl(var(--muted))"
+                    strokeOpacity={0.3}
+                  />
+                  <XAxis
+                    dataKey="mes"
+                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                    axisLine={{ stroke: "hsl(var(--border))" }}
+                    tickLine={{ stroke: "hsl(var(--border))" }}
+                  />
+                  <YAxis
+                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                    axisLine={{ stroke: "hsl(var(--border))" }}
+                    tickLine={{ stroke: "hsl(var(--border))" }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--background))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "6px",
+                      color: "hsl(var(--foreground))",
+                    }}
+                    cursor={{ fill: "transparent" }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="vendas"
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#colorVendasEstatisticas)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
 
@@ -206,25 +224,35 @@ export default function EstatisticasPage() {
             <CardDescription>Distribuição percentual de vendas</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={vendasPorMarca}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {vendasPorMarca.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            <div style={{ width: "100%", height: "300px", minHeight: "300px" }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart style={{ cursor: "default" }}>
+                  <Pie
+                    data={vendasPorMarca}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {vendasPorMarca.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--background))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "6px",
+                      color: "hsl(var(--foreground))",
+                    }}
+                    cursor={{ fill: "transparent" }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -236,27 +264,39 @@ export default function EstatisticasPage() {
           <CardDescription>Comparativo de interesses registrados e vendas realizadas</CardDescription>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={interessesVsVendas}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis
-                dataKey="mes"
-                className="text-xs"
-                tick={{ fill: "hsl(var(--muted-foreground))" }}
-              />
-              <YAxis className="text-xs" tick={{ fill: "hsl(var(--muted-foreground))" }} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--background))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "6px",
-                }}
-              />
-              <Legend />
-              <Bar dataKey="interesses" fill="#8b5cf6" name="Interesses" />
-              <Bar dataKey="vendas" fill="#3b82f6" name="Vendas" />
-            </BarChart>
-          </ResponsiveContainer>
+          <div style={{ width: "100%", height: "300px", minHeight: "300px" }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={interessesVsVendas}
+                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                style={{ cursor: "default" }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" />
+                <XAxis
+                  dataKey="mes"
+                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                  axisLine={{ stroke: "hsl(var(--border))" }}
+                  tickLine={{ stroke: "hsl(var(--border))" }}
+                />
+                <YAxis
+                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                  axisLine={{ stroke: "hsl(var(--border))" }}
+                  tickLine={{ stroke: "hsl(var(--border))" }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--background))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "6px",
+                    color: "hsl(var(--foreground))",
+                  }}
+                />
+                <Legend />
+                <Bar dataKey="interesses" fill="#8b5cf6" name="Interesses" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="vendas" fill="#3b82f6" name="Vendas" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </CardContent>
       </Card>
 
@@ -326,26 +366,45 @@ export default function EstatisticasPage() {
           <CardDescription>Dias médios que veículos ficam em estoque por marca</CardDescription>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={tempoMedioEstoque} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis type="number" className="text-xs" tick={{ fill: "hsl(var(--muted-foreground))" }} />
-              <YAxis
-                dataKey="marca"
-                type="category"
-                className="text-xs"
-                tick={{ fill: "hsl(var(--muted-foreground))" }}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--background))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "6px",
-                }}
-              />
-              <Bar dataKey="dias" fill="#f59e0b" name="Dias" />
-            </BarChart>
-          </ResponsiveContainer>
+          <div style={{ width: "100%", height: "300px", minHeight: "300px" }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={tempoMedioEstoque}
+                layout="vertical"
+                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                style={{ cursor: "default" }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="hsl(var(--muted))"
+                  strokeOpacity={0.3}
+                />
+                <XAxis
+                  type="number"
+                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                  axisLine={{ stroke: "hsl(var(--border))" }}
+                  tickLine={{ stroke: "hsl(var(--border))" }}
+                />
+                <YAxis
+                  dataKey="marca"
+                  type="category"
+                  width={80}
+                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                  axisLine={{ stroke: "hsl(var(--border))" }}
+                  tickLine={{ stroke: "hsl(var(--border))" }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--background))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "6px",
+                    color: "hsl(var(--foreground))",
+                  }}
+                />
+                <Bar dataKey="dias" fill="#f59e0b" name="Dias" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </CardContent>
       </Card>
 

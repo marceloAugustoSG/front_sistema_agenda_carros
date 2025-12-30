@@ -6,23 +6,25 @@ import { Input } from "@/components/ui/input"
 import { IconTrendingUp, IconTrendingDown, IconBell, IconClock, IconCheck, IconSearch, IconCar, IconPhone, IconAlertCircle, IconChecklist } from "@tabler/icons-react"
 import { Link } from "react-router-dom"
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from "recharts"
-import { getVeiculos, getClientes, getInteresses, getPropostas, type Veiculo } from "@/utils/storage"
+import { getVeiculos, getClientes, getInteresses, getPropostas, getLembretes, type Veiculo, type Lembrete, type Cliente, type Interesse, type Proposta } from "@/utils/storage"
 
 export default function HomePage() {
   const [veiculos, setVeiculos] = useState<Veiculo[]>([])
-  const [clientes, setClientes] = useState([])
-  const [interesses, setInteresses] = useState([])
-  const [propostas, setPropostas] = useState([])
+  const [clientes, setClientes] = useState<Cliente[]>([])
+  const [interesses, setInteresses] = useState<Interesse[]>([])
+  const [propostas, setPropostas] = useState<Proposta[]>([])
+  const [lembretes, setLembretes] = useState<Lembrete[]>([])
 
   useEffect(() => {
     setVeiculos(getVeiculos())
     setClientes(getClientes())
     setInteresses(getInteresses())
     setPropostas(getPropostas())
+    setLembretes(getLembretes())
   }, [])
 
   const resumoHoje = {
-    vendas: propostas.filter((p: any) => p.status === "aceita").length,
+    vendas: propostas.filter((p) => p.status === "aceita").length,
     clientesCadastrados: clientes.length,
     interessesCadastrados: interesses.length,
     veiculosAdicionados: veiculos.length,
@@ -31,14 +33,14 @@ export default function HomePage() {
   const totais = {
     clientesAtivos: clientes.length,
     veiculosDisponiveis: veiculos.filter((v) => v.status === "disponivel").length,
-    interessesAbertos: interesses.filter((i: any) => i.status === "pendente").length,
-    taxaConversao: interesses.length > 0 ? ((propostas.filter((p: any) => p.status === "aceita").length / interesses.length) * 100).toFixed(1) : "0",
+    interessesAbertos: interesses.filter((i) => i.status === "pendente").length,
+    taxaConversao: interesses.length > 0 ? ((propostas.filter((p) => p.status === "aceita").length / interesses.length) * 100).toFixed(1) : "0",
   }
 
   const interessesPendentes = interesses
-    .filter((i: any) => i.status === "pendente")
+    .filter((i) => i.status === "pendente")
     .slice(0, 5)
-    .map((i: any) => ({
+    .map((i) => ({
       id: i.id,
       clienteNome: i.clienteNome,
       veiculo: `${i.marca} ${i.modelo} ${i.ano}`,
@@ -53,16 +55,135 @@ export default function HomePage() {
       ),
     }))
 
-  const veiculosRecentes = veiculos.slice(0, 5)
-
-  const propostasPendentes = propostas.filter((p: any) => p.status === "pendente").slice(0, 5)
-
   const atividadesRecentes: any[] = []
 
   const vendasUltimos7Dias: any[] = []
 
   // Ações do dia - tarefas prioritárias para o vendedor
-  const acoesDoDia: any[] = []
+  const hoje = new Date().toISOString().split("T")[0]
+  
+  // Adicionar interesses disponíveis às ações do dia
+  const acoesInteresses = interessesPendentes
+    .filter((i) => i.disponivel)
+    .map((interesse) => ({
+      id: `interesse-${interesse.id}`,
+      tipo: "notificar",
+      titulo: `Veículo disponível: ${interesse.veiculo}`,
+      descricao: `Cliente ${interesse.clienteNome} demonstrou interesse e o veículo está disponível`,
+      cliente: interesse.clienteNome,
+      telefone: interesse.telefone,
+      veiculo: interesse.veiculo,
+      tempo: "Agora",
+      prioridade: "alta" as const,
+      acao: "notificar" as const,
+      data: interesse.dataCadastro,
+    }))
+  
+  const acoesLembretes = lembretes
+    .filter((lembrete) => !lembrete.concluido)
+    .map((lembrete) => {
+      const dataLembrete = new Date(lembrete.data)
+      const hojeDate = new Date(hoje)
+      const diffTime = dataLembrete.getTime() - hojeDate.getTime()
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+      
+      let tempo = ""
+      let acao = "lembrete"
+      
+      if (diffDays < 0) {
+        tempo = `${Math.abs(diffDays)} dia(s) atrás`
+        acao = "lembrete" // Atrasado
+      } else if (diffDays === 0) {
+        tempo = "Hoje"
+        acao = "lembrete"
+      } else if (diffDays === 1) {
+        tempo = "Amanhã"
+        acao = "lembrete"
+      } else {
+        tempo = `Em ${diffDays} dias`
+        acao = "lembrete"
+      }
+
+      // Buscar telefone do cliente
+      const cliente = clientes.find((c) => c.id === lembrete.clienteId)
+      const telefone = cliente ? cliente.telefone : ""
+
+      return {
+        id: lembrete.id,
+        tipo: lembrete.tipo,
+        titulo: lembrete.titulo,
+        descricao: lembrete.descricao || "",
+        cliente: lembrete.clienteNome,
+        telefone: telefone,
+        veiculo: lembrete.veiculoDescricao || "N/A",
+        tempo: tempo,
+        prioridade: lembrete.prioridade,
+        acao: acao,
+        data: lembrete.data,
+      }
+    })
+    .filter((acao) => {
+      // Mostrar apenas lembretes de hoje, atrasados ou próximos 3 dias
+      const dataLembrete = new Date(acao.data)
+      const hojeDate = new Date(hoje)
+      const diffTime = dataLembrete.getTime() - hojeDate.getTime()
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+      return diffDays <= 3 || diffDays < 0
+    })
+    .sort((a, b) => {
+      // Ordenar por: atrasados primeiro, depois por prioridade, depois por data
+      const dataA = new Date(a.data)
+      const dataB = new Date(b.data)
+      const hojeDate = new Date(hoje)
+      
+      const atrasadoA = dataA < hojeDate
+      const atrasadoB = dataB < hojeDate
+      
+      if (atrasadoA && !atrasadoB) return -1
+      if (!atrasadoA && atrasadoB) return 1
+      
+      const prioridadeOrder = { alta: 3, media: 2, baixa: 1 }
+      const prioridadeDiff = prioridadeOrder[b.prioridade as keyof typeof prioridadeOrder] - 
+                            prioridadeOrder[a.prioridade as keyof typeof prioridadeOrder]
+      
+      if (prioridadeDiff !== 0) return prioridadeDiff
+      
+      return dataA.getTime() - dataB.getTime()
+    })
+
+  const acoesDoDia = [
+    ...acoesInteresses,
+    ...acoesLembretes,
+  ]
+    .sort((a, b) => {
+      // Ordenar todas as ações: interesses primeiro (prioridade alta), depois lembretes
+      if (a.acao === "notificar" && b.acao !== "notificar") return -1
+      if (a.acao !== "notificar" && b.acao === "notificar") return 1
+      
+      // Se ambos são lembretes, manter ordenação anterior
+      if (a.acao === "lembrete" && b.acao === "lembrete") {
+        const dataA = new Date(a.data)
+        const dataB = new Date(b.data)
+        const hojeDate = new Date(hoje)
+        
+        const atrasadoA = dataA < hojeDate
+        const atrasadoB = dataB < hojeDate
+        
+        if (atrasadoA && !atrasadoB) return -1
+        if (!atrasadoA && atrasadoB) return 1
+        
+        const prioridadeOrder = { alta: 3, media: 2, baixa: 1 }
+        const prioridadeDiff = prioridadeOrder[b.prioridade as keyof typeof prioridadeOrder] - 
+                              prioridadeOrder[a.prioridade as keyof typeof prioridadeOrder]
+        
+        if (prioridadeDiff !== 0) return prioridadeDiff
+        
+        return dataA.getTime() - dataB.getTime()
+      }
+      
+      return 0
+    })
+    .slice(0, 10) // Limitar a 10 ações
 
   const [buscaRapida, setBuscaRapida] = useState("")
   const [resultadosBusca, setResultadosBusca] = useState<Veiculo[]>([])
@@ -289,31 +410,36 @@ export default function HomePage() {
                         </Button>
                       )}
                       {acao.acao === "lembrete" && (
-                        <Button size="sm" variant="outline" asChild>
-                          <Link to={`/dashboard/clientes`}>Ver Detalhes</Link>
-                        </Button>
+                        <>
+                          <Button size="sm" variant="outline" asChild>
+                            <Link to={`/dashboard/lembretes`}>Ver Lembretes</Link>
+                          </Button>
+                          {acao.telefone && (
+                            <Button size="sm" variant="outline" asChild>
+                              <a href={`tel:${acao.telefone.replace(/\D/g, "")}`}>
+                                Ligar
+                              </a>
+                            </Button>
+                          )}
+                        </>
                       )}
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          // Aqui você pode implementar a lógica para marcar como concluída
-                          console.log(`Ação ${acao.id} concluída`)
-                        }}
-                      >
-                        Concluir
-                      </Button>
                     </div>
                   </div>
                 </div>
               )
             })}
           </div>
-          <div className="mt-4 pt-4 border-t">
-            <Button variant="outline" className="w-full" asChild>
-              <Link to="/dashboard/interesses">Ver todas as ações</Link>
-            </Button>
-          </div>
+          {acoesDoDia.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>Nenhuma ação pendente para hoje</p>
+            </div>
+          ) : (
+            <div className="mt-4 pt-4 border-t">
+              <Button variant="outline" className="w-full" asChild>
+                <Link to="/dashboard/lembretes">Ver todos os lembretes</Link>
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -402,48 +528,59 @@ export default function HomePage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
-            {interessesPendentes.map((interesse) => (
-              <div
-                key={interesse.id}
-                className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors"
-              >
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="font-semibold">{interesse.clienteNome}</p>
+            {interessesPendentes.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>Nenhum interesse pendente no momento</p>
+                <Button variant="outline" className="mt-4" asChild>
+                  <Link to="/dashboard/interesses">Cadastrar Interesse</Link>
+                </Button>
+              </div>
+            ) : (
+              <>
+                {interessesPendentes.map((interesse) => (
+                  <div
+                    key={interesse.id}
+                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-semibold">{interesse.clienteNome}</p>
+                        {interesse.disponivel && (
+                          <Badge className="bg-green-600 text-white">Disponível</Badge>
+                        )}
+                        {!interesse.disponivel && (
+                          <Badge variant="outline">Aguardando</Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground">{interesse.veiculo}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {interesse.telefone} • {interesse.dataCadastro}
+                      </p>
+                    </div>
                     {interesse.disponivel && (
-                      <Badge className="bg-green-600 text-white">Disponível</Badge>
-                    )}
-                    {!interesse.disponivel && (
-                      <Badge variant="outline">Aguardando</Badge>
+                      <Button
+                        size="sm"
+                        asChild
+                      >
+                        <Link
+                          to="/dashboard/interesses"
+                          state={{
+                            clienteNome: interesse.clienteNome,
+                            clienteTelefone: interesse.telefone,
+                            veiculo: interesse.veiculo,
+                          }}
+                        >
+                          Notificar
+                        </Link>
+                      </Button>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground">{interesse.veiculo}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {interesse.telefone} • {interesse.dataCadastro}
-                  </p>
-                </div>
-                {interesse.disponivel && (
-                  <Button
-                    size="sm"
-                    asChild
-                  >
-                    <Link
-                      to="/dashboard/interesses"
-                      state={{
-                        clienteNome: interesse.clienteNome,
-                        clienteTelefone: interesse.telefone,
-                        veiculo: interesse.veiculo,
-                      }}
-                    >
-                      Notificar
-                    </Link>
-                  </Button>
-                )}
-              </div>
-            ))}
-            <Button variant="outline" className="w-full mt-2" asChild>
-              <Link to="/dashboard/interesses">Ver todos os interesses</Link>
-            </Button>
+                ))}
+                <Button variant="outline" className="w-full mt-2" asChild>
+                  <Link to="/dashboard/interesses">Ver todos os interesses</Link>
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
 
