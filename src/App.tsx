@@ -10,7 +10,8 @@ import RegisterPage from "./pages/register"
 import VeiculosPage from "./pages/dashboard/Veiculos"
 import ClientesPage from "./pages/dashboard/Clientes"
 import InteressesPage from "./pages/dashboard/Interesses"
-import EstoquePage from "./pages/dashboard/Estoque"
+import LembretesPage from "./pages/dashboard/Lembretes"
+import PropostasPage from "./pages/dashboard/Propostas"
 
 export function App() {
   return (
@@ -22,9 +23,10 @@ export function App() {
           <Route index element={<DashboardHome />} />
           <Route path="estatisticas" element={<EstatisticasPage />} />
           <Route path="veiculos" element={<VeiculosPage />} />
-          <Route path="estoque" element={<EstoquePage />} />
           <Route path="clientes" element={<ClientesPage />} />
           <Route path="interesses" element={<InteressesPage />} />
+          <Route path="lembretes" element={<LembretesPage />} />
+          <Route path="propostas" element={<PropostasPage />} />
           <Route path="configuracoes" element={<ConfiguracoesPage />} />
           <Route path="ajuda" element={<AjudaPage />} />
         </Route>

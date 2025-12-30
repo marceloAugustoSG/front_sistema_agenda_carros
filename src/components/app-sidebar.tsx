@@ -9,7 +9,8 @@ import {
   IconCar,
   IconUsers,
   IconShoppingCart,
-  IconPackage,
+  IconBell,
+  IconFileText,
 } from "@tabler/icons-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -54,14 +55,19 @@ const data = {
       icon: IconCar,
     },
     {
-      title: "Estoque",
-      url: "/dashboard/estoque",
-      icon: IconPackage,
-    },
-    {
       title: "Interesses",
       url: "/dashboard/interesses",
       icon: IconShoppingCart,
+    },
+    {
+      title: "Lembretes",
+      url: "/dashboard/lembretes",
+      icon: IconBell,
+    },
+    {
+      title: "Propostas",
+      url: "/dashboard/propostas",
+      icon: IconFileText,
     },
   ],
   navSecondary: [

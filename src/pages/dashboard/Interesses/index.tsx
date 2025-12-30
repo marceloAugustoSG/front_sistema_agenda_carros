@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useLocation, Link } from "react-router-dom"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -12,21 +13,36 @@ import {
 } from "@/components/ui/select"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
+import { IconSearch, IconBolt, IconUser, IconCar } from "@tabler/icons-react"
 
 // Simulação de dados - em produção viria de uma API
 const clientesMock = [
   { id: "1", nome: "João Silva", telefone: "(11) 99999-9999" },
   { id: "2", nome: "Maria Santos", telefone: "(11) 88888-8888" },
   { id: "3", nome: "Pedro Costa", telefone: "(11) 77777-7777" },
+  { id: "4", nome: "Ana Oliveira", telefone: "(11) 66666-6666" },
+  { id: "5", nome: "Carlos Souza", telefone: "(11) 55555-5555" },
 ]
 
 const veiculosEstoqueMock = [
-  { id: "1", marca: "Toyota", modelo: "Corolla", ano: "2023", status: "disponivel" },
-  { id: "2", marca: "Honda", modelo: "Civic", ano: "2024", status: "disponivel" },
-  { id: "3", marca: "Ford", modelo: "Fiesta", ano: "2022", status: "vendido" },
+  { id: "1", marca: "Toyota", modelo: "Corolla", ano: "2023", status: "disponivel", valor: "150000", cor: "Branco" },
+  { id: "2", marca: "Honda", modelo: "Civic", ano: "2024", status: "disponivel", valor: "180000", cor: "Preto" },
+  { id: "3", marca: "Ford", modelo: "Fiesta", ano: "2022", status: "vendido", valor: "80000", cor: "Prata" },
+  { id: "4", marca: "Volkswagen", modelo: "Gol", ano: "2023", status: "disponivel", valor: "70000", cor: "Vermelho" },
+  { id: "5", marca: "Toyota", modelo: "Corolla", ano: "2024", status: "disponivel", valor: "160000", cor: "Prata" },
+  { id: "6", marca: "Chevrolet", modelo: "Onix", ano: "2023", status: "disponivel", valor: "75000", cor: "Branco" },
+  { id: "7", marca: "Honda", modelo: "City", ano: "2023", status: "disponivel", valor: "95000", cor: "Branco" },
+  { id: "8", marca: "Volkswagen", modelo: "Virtus", ano: "2024", status: "disponivel", valor: "110000", cor: "Preto" },
 ]
 
 export default function InteressesPage() {
+  const location = useLocation()
+  const preenchimentoAutomatico = location.state as {
+    clienteNome?: string
+    clienteTelefone?: string
+    veiculo?: string
+  } | null
+
   const [formData, setFormData] = useState({
     clienteId: "",
     marca: "",
@@ -36,6 +52,185 @@ export default function InteressesPage() {
     valorMaximo: "",
     observacoes: "",
   })
+
+  const [modoRapido, setModoRapido] = useState(false)
+  const [buscaCliente, setBuscaCliente] = useState("")
+  const [veiculoCompleto, setVeiculoCompleto] = useState("")
+  const [clientesFiltrados, setClientesFiltrados] = useState(clientesMock)
+  const [sugestoesVisiveis, setSugestoesVisiveis] = useState(false)
+  const [veiculoBuscado, setVeiculoBuscado] = useState<{ marca: string; modelo: string; ano: string } | null>(null)
+
+  // Função para extrair marca, modelo e ano do veículo
+  const parsearVeiculo = (veiculoString: string) => {
+    // Formato esperado: "Toyota Corolla 2024" ou "Honda Civic 2023"
+    const partes = veiculoString.trim().split(" ")
+    if (partes.length >= 3) {
+      const ano = partes[partes.length - 1]
+      const marca = partes[0]
+      const modelo = partes.slice(1, -1).join(" ")
+      return { marca, modelo, ano }
+    }
+    return { marca: "", modelo: "", ano: "" }
+  }
+
+  // Encontrar cliente pelo nome ou telefone
+  const encontrarCliente = (nome?: string, telefone?: string) => {
+    if (!nome && !telefone) return null
+    return clientesMock.find(
+      (c) =>
+        (nome && c.nome.toLowerCase().includes(nome.toLowerCase())) ||
+        (telefone && c.telefone === telefone)
+    )
+  }
+
+  // Filtrar clientes na busca
+  useEffect(() => {
+    if (buscaCliente.trim() === "") {
+      setClientesFiltrados(clientesMock)
+    } else {
+      const termo = buscaCliente.toLowerCase()
+      setClientesFiltrados(
+        clientesMock.filter(
+          (c) =>
+            c.nome.toLowerCase().includes(termo) ||
+            c.telefone.includes(termo)
+        )
+      )
+    }
+  }, [buscaCliente])
+
+  // Preencher veículo completo
+  const handleVeiculoCompleto = (valor: string) => {
+    setVeiculoCompleto(valor)
+    if (valor.trim() !== "") {
+      const { marca, modelo, ano } = parsearVeiculo(valor)
+      setFormData((prev) => ({
+        ...prev,
+        marca: marca || prev.marca,
+        modelo: modelo || prev.modelo,
+        ano: ano || prev.ano,
+      }))
+    }
+  }
+
+  // Cadastro rápido - só com dados essenciais
+  const handleCadastroRapido = (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!formData.clienteId || !formData.marca || !formData.modelo || !formData.ano) {
+      toast.error("Preencha pelo menos: Cliente, Marca, Modelo e Ano")
+      return
+    }
+
+    const cliente = clientesMock.find((c) => c.id === formData.clienteId)
+    if (!cliente) {
+      toast.error("Cliente não encontrado")
+      return
+    }
+
+    const emEstoque = verificarEstoque(formData.marca, formData.modelo, formData.ano)
+
+    const novoInteresse = {
+      id: Date.now().toString(),
+      clienteId: formData.clienteId,
+      clienteNome: cliente.nome,
+      marca: formData.marca,
+      modelo: formData.modelo,
+      ano: formData.ano,
+      cor: formData.cor || "",
+      valorMaximo: "",
+      observacoes: "",
+      dataCadastro: new Date().toLocaleDateString("pt-BR"),
+      notificado: emEstoque,
+    }
+
+    setInteresses((prev) => [novoInteresse, ...prev])
+
+    if (emEstoque) {
+      toast.success(`Veículo encontrado! Cliente ${cliente.nome} será notificado.`, {
+        duration: 5000,
+      })
+      setSugestoesVisiveis(false)
+    } else {
+      toast.info(`Interesse cadastrado! Cliente ${cliente.nome} será notificado quando chegar.`, {
+        duration: 5000,
+      })
+      setVeiculoBuscado({ marca: formData.marca, modelo: formData.modelo, ano: formData.ano })
+      setSugestoesVisiveis(true)
+    }
+
+    // Limpar formulário
+    setFormData({
+      clienteId: "",
+      marca: "",
+      modelo: "",
+      ano: "",
+      cor: "",
+      valorMaximo: "",
+      observacoes: "",
+    })
+    setVeiculoCompleto("")
+    setBuscaCliente("")
+    
+    // Mostrar sugestões se não estiver em estoque
+    if (!emEstoque) {
+      setVeiculoBuscado({ marca: formData.marca, modelo: formData.modelo, ano: formData.ano })
+      setSugestoesVisiveis(true)
+    } else {
+      setSugestoesVisiveis(false)
+    }
+  }
+
+  // Preencher formulário automaticamente se vier da Home
+  useEffect(() => {
+    if (preenchimentoAutomatico) {
+      const cliente = encontrarCliente(
+        preenchimentoAutomatico.clienteNome,
+        preenchimentoAutomatico.clienteTelefone
+      )
+
+      if (preenchimentoAutomatico.veiculo && cliente) {
+        const { marca, modelo, ano } = parsearVeiculo(preenchimentoAutomatico.veiculo)
+        setFormData({
+          clienteId: cliente.id,
+          marca: marca,
+          modelo: modelo,
+          ano: ano,
+          cor: "",
+          valorMaximo: "",
+          observacoes: "",
+        })
+      } else if (cliente) {
+        setFormData((prev) => ({
+          ...prev,
+          clienteId: cliente.id,
+        }))
+      } else if (preenchimentoAutomatico.clienteNome) {
+        // Se o cliente não foi encontrado, mas temos o nome, tentar buscar de forma mais flexível
+        const clienteAlternativo = clientesMock.find((c) =>
+          c.nome.toLowerCase().includes(preenchimentoAutomatico.clienteNome!.toLowerCase())
+        )
+        if (clienteAlternativo && preenchimentoAutomatico.veiculo) {
+          const { marca, modelo, ano } = parsearVeiculo(preenchimentoAutomatico.veiculo)
+          setFormData({
+            clienteId: clienteAlternativo.id,
+            marca: marca,
+            modelo: modelo,
+            ano: ano,
+            cor: "",
+            valorMaximo: "",
+            observacoes: "",
+          })
+        } else if (clienteAlternativo) {
+          setFormData((prev) => ({
+            ...prev,
+            clienteId: clienteAlternativo.id,
+          }))
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const [interesses, setInteresses] = useState<Array<{
     id: string
@@ -68,6 +263,42 @@ export default function InteressesPage() {
         veiculo.ano === ano &&
         veiculo.status === "disponivel"
     )
+  }
+
+  // Buscar veículos similares disponíveis
+  const buscarVeiculosSimilares = (marca: string, modelo: string, ano: string) => {
+    const veiculosDisponiveis = veiculosEstoqueMock.filter((v) => v.status === "disponivel")
+    
+    // Prioridade: Mesma marca, modelo similar, ano próximo
+    const anoNum = parseInt(ano)
+    const veiculosSimilares = veiculosDisponiveis
+      .filter((v) => {
+        // Não incluir o próprio veículo
+        if (
+          v.marca.toLowerCase() === marca.toLowerCase() &&
+          v.modelo.toLowerCase() === modelo.toLowerCase() &&
+          v.ano === ano
+        ) {
+          return false
+        }
+        return true
+      })
+      .map((v) => {
+        let score = 0
+        // Mesma marca = +3 pontos
+        if (v.marca.toLowerCase() === marca.toLowerCase()) score += 3
+        // Mesmo modelo (ano diferente) = +2 pontos
+        if (v.modelo.toLowerCase() === modelo.toLowerCase()) score += 2
+        // Ano próximo = +1 ponto
+        const anoV = parseInt(v.ano)
+        if (Math.abs(anoV - anoNum) <= 1) score += 1
+        
+        return { ...v, score }
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3) // Top 3 sugestões
+
+    return veiculosSimilares
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -112,16 +343,17 @@ export default function InteressesPage() {
           duration: 5000,
         }
       )
-      // Aqui você pode adicionar lógica para enviar SMS, email, WhatsApp, etc.
-      console.log(`Notificar cliente ${cliente.nome} sobre veículo disponível`)
+      setSugestoesVisiveis(false)
     } else {
-      // Veículo não está em estoque - cadastrar interesse
+      // Veículo não está em estoque - cadastrar interesse e mostrar sugestões
       toast.info(
         `Interesse cadastrado! Cliente ${cliente.nome} será notificado quando o veículo chegar ao estoque.`,
         {
           duration: 5000,
         }
       )
+      setVeiculoBuscado({ marca: formData.marca, modelo: formData.modelo, ano: formData.ano })
+      setSugestoesVisiveis(true)
     }
 
     // Limpar formulário
@@ -157,35 +389,191 @@ export default function InteressesPage() {
     <div className="px-4 lg:px-6 space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Cadastrar Interesse do Cliente</CardTitle>
-          <CardDescription>
-            Cadastre o veículo que o cliente deseja. Se estiver em estoque, o cliente será notificado automaticamente.
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Cadastrar Interesse do Cliente</CardTitle>
+              <CardDescription>
+                Cadastre o veículo que o cliente deseja. Se estiver em estoque, o cliente será notificado automaticamente.
+              </CardDescription>
+            </div>
+            <Button
+              type="button"
+              variant={modoRapido ? "default" : "outline"}
+              size="sm"
+              onClick={() => setModoRapido(!modoRapido)}
+            >
+              <IconBolt className="size-4 mr-2" />
+              {modoRapido ? "Modo Completo" : "Modo Rápido"}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Cliente */}
-              <div className="space-y-2">
-                <Label htmlFor="clienteId">
-                  Cliente <span className="text-destructive">*</span>
-                </Label>
-                <Select
-                  value={formData.clienteId}
-                  onValueChange={(value) => handleSelectChange("clienteId", value)}
-                >
-                  <SelectTrigger id="clienteId">
-                    <SelectValue placeholder="Selecione o cliente" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clientesMock.map((cliente) => (
-                      <SelectItem key={cliente.id} value={cliente.id}>
-                        {cliente.nome} - {cliente.telefone}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          {modoRapido ? (
+            // Formulário Rápido
+            <form onSubmit={handleCadastroRapido} className="space-y-4">
+              <div className="p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg">
+                <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
+                  <IconBolt className="size-4 inline mr-1" />
+                  Modo Rápido - Apenas dados essenciais
+                </p>
+                <p className="text-xs text-blue-700 dark:text-blue-300">
+                  Preencha apenas o necessário para cadastrar o interesse rapidamente
+                </p>
               </div>
+
+              <div className="space-y-4">
+                {/* Busca Rápida de Cliente */}
+                <div className="space-y-2">
+                  <Label htmlFor="buscaCliente">
+                    Buscar Cliente <span className="text-destructive">*</span>
+                  </Label>
+                  <div className="relative">
+                    <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                    <Input
+                      id="buscaCliente"
+                      value={buscaCliente}
+                      onChange={(e) => setBuscaCliente(e.target.value)}
+                      placeholder="Digite nome ou telefone do cliente..."
+                      className="pl-9"
+                    />
+                  </div>
+                  {buscaCliente.trim() !== "" && clientesFiltrados.length > 0 && (
+                    <div className="border rounded-lg mt-2 max-h-40 overflow-y-auto">
+                      {clientesFiltrados.map((cliente) => (
+                        <button
+                          key={cliente.id}
+                          type="button"
+                          onClick={() => {
+                            setFormData((prev) => ({ ...prev, clienteId: cliente.id }))
+                            setBuscaCliente(cliente.nome)
+                            setClientesFiltrados([])
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-accent transition-colors flex items-center gap-2"
+                        >
+                          <IconUser className="size-4 text-muted-foreground" />
+                          <div>
+                            <p className="font-medium">{cliente.nome}</p>
+                            <p className="text-xs text-muted-foreground">{cliente.telefone}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {buscaCliente.trim() !== "" && clientesFiltrados.length === 0 && (
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Cliente não encontrado. Cadastre primeiro em{" "}
+                      <Link to="/dashboard/clientes" className="text-primary underline">
+                        Clientes
+                      </Link>
+                    </p>
+                  )}
+                </div>
+
+                {/* Veículo Completo */}
+                <div className="space-y-2">
+                  <Label htmlFor="veiculoCompleto">
+                    Veículo <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="veiculoCompleto"
+                    value={veiculoCompleto}
+                    onChange={(e) => handleVeiculoCompleto(e.target.value)}
+                    placeholder="Ex: Toyota Corolla 2024 (ou digite marca, modelo e ano separadamente)"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Digite tudo junto ou preencha os campos abaixo
+                  </p>
+                </div>
+
+                {/* Campos Separados (opcionais se preencheu o campo completo) */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="marca-rapido">Marca</Label>
+                    <Input
+                      id="marca-rapido"
+                      name="marca"
+                      value={formData.marca}
+                      onChange={handleChange}
+                      placeholder="Toyota"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="modelo-rapido">Modelo</Label>
+                    <Input
+                      id="modelo-rapido"
+                      name="modelo"
+                      value={formData.modelo}
+                      onChange={handleChange}
+                      placeholder="Corolla"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ano-rapido">Ano</Label>
+                    <Input
+                      id="ano-rapido"
+                      name="ano"
+                      type="number"
+                      value={formData.ano}
+                      onChange={handleChange}
+                      placeholder="2024"
+                      min="1900"
+                      max={new Date().getFullYear() + 1}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-4 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setFormData({
+                      clienteId: "",
+                      marca: "",
+                      modelo: "",
+                      ano: "",
+                      cor: "",
+                      valorMaximo: "",
+                      observacoes: "",
+                    })
+                    setVeiculoCompleto("")
+                    setBuscaCliente("")
+                  }}
+                >
+                  Limpar
+                </Button>
+                <Button type="submit" className="bg-green-600 hover:bg-green-700">
+                  <IconBolt className="size-4 mr-2" />
+                  Cadastrar Rápido
+                </Button>
+              </div>
+            </form>
+          ) : (
+            // Formulário Completo
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Cliente */}
+                <div className="space-y-2">
+                  <Label htmlFor="clienteId">
+                    Cliente <span className="text-destructive">*</span>
+                  </Label>
+                  <Select
+                    value={formData.clienteId}
+                    onValueChange={(value) => handleSelectChange("clienteId", value)}
+                  >
+                    <SelectTrigger id="clienteId">
+                      <SelectValue placeholder="Selecione o cliente" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clientesMock.map((cliente) => (
+                        <SelectItem key={cliente.id} value={cliente.id}>
+                          {cliente.nome} - {cliente.telefone}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
               {/* Marca */}
               <div className="space-y-2">
@@ -298,6 +686,92 @@ export default function InteressesPage() {
               <Button type="submit">Cadastrar Interesse</Button>
             </div>
           </form>
+          )}
+
+          {/* Sugestões Inteligentes */}
+          {sugestoesVisiveis && veiculoBuscado && (
+            <Card className="mt-6 border-2 border-blue-200 bg-blue-50/50 dark:bg-blue-950/10">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <IconCar className="size-5 text-blue-600" />
+                  Sugestões de Veículos Similares
+                </CardTitle>
+                <CardDescription>
+                  O veículo {veiculoBuscado.marca} {veiculoBuscado.modelo} {veiculoBuscado.ano} não está disponível,
+                  mas temos estas opções similares em estoque:
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {buscarVeiculosSimilares(veiculoBuscado.marca, veiculoBuscado.modelo, veiculoBuscado.ano).length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Nenhum veículo similar encontrado no momento.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {buscarVeiculosSimilares(veiculoBuscado.marca, veiculoBuscado.modelo, veiculoBuscado.ano).map(
+                      (veiculo) => (
+                        <Card key={veiculo.id} className="hover:shadow-md transition-shadow">
+                          <CardHeader className="pb-3">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <CardTitle className="text-lg">
+                                  {veiculo.marca} {veiculo.modelo}
+                                </CardTitle>
+                                <CardDescription className="mt-1">
+                                  {veiculo.ano} • {veiculo.cor}
+                                </CardDescription>
+                              </div>
+                              <Badge className="bg-green-600">Disponível</Badge>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="space-y-3">
+                            <div>
+                              <p className="text-2xl font-bold text-primary">
+                                R$ {parseFloat(veiculo.valor).toLocaleString("pt-BR", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </p>
+                            </div>
+                            <Button
+                              className="w-full"
+                              size="sm"
+                              onClick={() => {
+                                // Preencher formulário com o veículo sugerido
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  marca: veiculo.marca,
+                                  modelo: veiculo.modelo,
+                                  ano: veiculo.ano,
+                                }))
+                                setVeiculoCompleto(`${veiculo.marca} ${veiculo.modelo} ${veiculo.ano}`)
+                                setSugestoesVisiveis(false)
+                                toast.success(
+                                  `Veículo ${veiculo.marca} ${veiculo.modelo} ${veiculo.ano} selecionado! Preencha o cliente e cadastre.`
+                                )
+                              }}
+                            >
+                              Usar Este Veículo
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      )
+                    )}
+                  </div>
+                )}
+                <div className="mt-4 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSugestoesVisiveis(false)}
+                    className="w-full"
+                  >
+                    Ocultar Sugestões
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </CardContent>
       </Card>
 
