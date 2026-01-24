@@ -1,6 +1,4 @@
-// Utilitários para gerenciar localStorage
 
-// Tipos
 export interface Veiculo {
   id: string
   marca: string
@@ -39,6 +37,7 @@ export interface Interesse {
   observacoes: string
   dataCadastro: string
   status: "pendente" | "atendido" | "cancelado"
+  notificado?: boolean
 }
 
 export interface Lembrete {
@@ -78,7 +77,6 @@ export interface Proposta {
   dataCriacao: string
 }
 
-// Chaves do localStorage
 const STORAGE_KEYS = {
   VEICULOS: "agenda_veiculos",
   CLIENTES: "agenda_clientes",
@@ -87,7 +85,6 @@ const STORAGE_KEYS = {
   PROPOSTAS: "agenda_propostas",
 }
 
-// Funções genéricas
 function getFromStorage<T>(key: string, defaultValue: T[]): T[] {
   try {
     if (typeof window === "undefined") return defaultValue
@@ -95,7 +92,6 @@ function getFromStorage<T>(key: string, defaultValue: T[]): T[] {
     if (item) {
       return JSON.parse(item)
     }
-    // Se não existe, retorna array vazio e salva
     setToStorage(key, defaultValue)
     return defaultValue
   } catch (error) {
@@ -112,7 +108,6 @@ function setToStorage<T>(key: string, data: T[]): void {
   }
 }
 
-// Funções específicas para Veículos
 export function getVeiculos(): Veiculo[] {
   return getFromStorage<Veiculo>(STORAGE_KEYS.VEICULOS, [])
 }
@@ -142,7 +137,6 @@ export function deleteVeiculo(id: string): void {
   saveVeiculos(filtrados)
 }
 
-// Funções específicas para Clientes
 export function getClientes(): Cliente[] {
   return getFromStorage<Cliente>(STORAGE_KEYS.CLIENTES, [])
 }
@@ -172,7 +166,6 @@ export function deleteCliente(id: string): void {
   saveClientes(filtrados)
 }
 
-// Funções específicas para Interesses
 export function getInteresses(): Interesse[] {
   return getFromStorage<Interesse>(STORAGE_KEYS.INTERESSES, [])
 }
@@ -196,7 +189,6 @@ export function updateInteresse(id: string, interesseAtualizado: Partial<Interes
   }
 }
 
-// Funções específicas para Lembretes
 export function getLembretes(): Lembrete[] {
   return getFromStorage<Lembrete>(STORAGE_KEYS.LEMBRETES, [])
 }
@@ -226,7 +218,6 @@ export function deleteLembrete(id: string): void {
   saveLembretes(filtrados)
 }
 
-// Funções específicas para Propostas
 export function getPropostas(): Proposta[] {
   return getFromStorage<Proposta>(STORAGE_KEYS.PROPOSTAS, [])
 }

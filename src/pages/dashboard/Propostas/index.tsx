@@ -41,7 +41,6 @@ export default function PropostasPage() {
   const [busca, setBusca] = useState<string>("")
   const [modalAberto, setModalAberto] = useState<boolean>(false)
 
-  // Carregar dados do localStorage
   useEffect(() => {
     setPropostas(getPropostas())
     setClientes(getClientes())
@@ -83,14 +82,12 @@ export default function PropostasPage() {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  // Calcular valor final quando veículo ou desconto mudar
   const calcularValorFinal = () => {
     const valorVeiculo = parseFloat(formData.valorVeiculo) || 0
     const desconto = parseFloat(formData.desconto) || 0
     return Math.max(0, valorVeiculo - desconto)
   }
 
-  // Quando selecionar veículo, preencher valor automaticamente
   const handleVeiculoChange = (veiculoId: string) => {
     const veiculo = veiculos.find((v) => v.id === veiculoId)
     if (veiculo) {
@@ -114,7 +111,7 @@ export default function PropostasPage() {
 
     const cliente = clientes.find((c) => c.id === formData.clienteId)
     const veiculo = veiculos.find((v) => v.id === formData.veiculoId)
-    
+
     if (!cliente || !veiculo) {
       toast.error("Cliente ou veículo não encontrado")
       return
@@ -150,10 +147,8 @@ export default function PropostasPage() {
       dataCriacao: new Date().toISOString().split("T")[0],
     }
 
-    // Salvar no localStorage
     addProposta(novaProposta)
 
-    // Atualizar estado
     setPropostas((prev) => [novaProposta, ...prev])
     toast.success("Proposta criada com sucesso!")
 
@@ -169,15 +164,13 @@ export default function PropostasPage() {
       validade: "",
       observacoes: "",
     })
-    
+
     setModalAberto(false)
   }
 
   const handleStatusChange = (id: string, novoStatus: "pendente" | "aceita" | "recusada") => {
-    // Atualizar no localStorage
     updateProposta(id, { status: novoStatus })
-    
-    // Atualizar estado
+
     setPropostas((prev) =>
       prev.map((p) => (p.id === id ? { ...p, status: novoStatus } : p))
     )
@@ -227,7 +220,6 @@ export default function PropostasPage() {
 
   return (
     <div className="px-4 lg:px-6 space-y-6">
-      {/* Resumo de Propostas */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
         <Card>
           <CardHeader className="pb-2">
@@ -288,7 +280,6 @@ export default function PropostasPage() {
         </Card>
       </div>
 
-      {/* Lista de Propostas */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -312,185 +303,174 @@ export default function PropostasPage() {
                     </DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-              {/* Cliente e Veículo na mesma linha */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Cliente */}
-                <div className="space-y-2">
-                  <Label htmlFor="clienteId">
-                    Cliente <span className="text-destructive">*</span>
-                  </Label>
-                  <Select
-                    value={formData.clienteId}
-                    onValueChange={(value) => handleSelectChange("clienteId", value)}
-                  >
-                    <SelectTrigger id="clienteId" className="w-full">
-                      <SelectValue placeholder="Selecione o cliente" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {clientes.map((cliente) => (
-                        <SelectItem key={cliente.id} value={cliente.id}>
-                          {cliente.nome} - {cliente.telefone}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="clienteId">
+                          Cliente <span className="text-destructive">*</span>
+                        </Label>
+                        <Select
+                          value={formData.clienteId}
+                          onValueChange={(value) => handleSelectChange("clienteId", value)}
+                        >
+                          <SelectTrigger id="clienteId" className="w-full">
+                            <SelectValue placeholder="Selecione o cliente" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {clientes.map((cliente) => (
+                              <SelectItem key={cliente.id} value={cliente.id}>
+                                {cliente.nome} - {cliente.telefone}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                {/* Veículo */}
-                <div className="space-y-2">
-                  <Label htmlFor="veiculoId">
-                    Veículo <span className="text-destructive">*</span>
-                  </Label>
-                  <Select
-                    value={formData.veiculoId}
-                    onValueChange={handleVeiculoChange}
-                  >
-                    <SelectTrigger id="veiculoId" className="w-full">
-                      <SelectValue placeholder="Selecione o veículo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {veiculos.filter(v => v.status === "disponivel").map((veiculo) => (
-                        <SelectItem key={veiculo.id} value={veiculo.id}>
-                          {veiculo.marca} {veiculo.modelo} {veiculo.ano} - R$ {parseFloat(veiculo.valor || "0").toLocaleString("pt-BR")}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="veiculoId">
+                          Veículo <span className="text-destructive">*</span>
+                        </Label>
+                        <Select
+                          value={formData.veiculoId}
+                          onValueChange={handleVeiculoChange}
+                        >
+                          <SelectTrigger id="veiculoId" className="w-full">
+                            <SelectValue placeholder="Selecione o veículo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {veiculos.filter(v => v.status === "disponivel").map((veiculo) => (
+                              <SelectItem key={veiculo.id} value={veiculo.id}>
+                                {veiculo.marca} {veiculo.modelo} {veiculo.ano} - R$ {parseFloat(veiculo.valor || "0").toLocaleString("pt-BR")}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
 
-              {/* Valor do Veículo */}
-              <div className="space-y-2">
-                <Label htmlFor="valorVeiculo">
-                  Valor do Veículo (R$) <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="valorVeiculo"
-                  name="valorVeiculo"
-                  type="number"
-                  value={formData.valorVeiculo}
-                  onChange={handleChange}
-                  placeholder="150000"
-                  required
-                />
-              </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="valorVeiculo">
+                        Valor do Veículo (R$) <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="valorVeiculo"
+                        name="valorVeiculo"
+                        type="number"
+                        value={formData.valorVeiculo}
+                        onChange={handleChange}
+                        placeholder="150000"
+                        required
+                      />
+                    </div>
 
-              {/* Desconto */}
-              <div className="space-y-2">
-                <Label htmlFor="desconto">Desconto (R$)</Label>
-                <Input
-                  id="desconto"
-                  name="desconto"
-                  type="number"
-                  value={formData.desconto}
-                  onChange={handleChange}
-                  placeholder="5000"
-                />
-              </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="desconto">Desconto (R$)</Label>
+                      <Input
+                        id="desconto"
+                        name="desconto"
+                        type="number"
+                        value={formData.desconto}
+                        onChange={handleChange}
+                        placeholder="5000"
+                      />
+                    </div>
 
-              {/* Valor Final (calculado) */}
-              {formData.valorVeiculo && (
-                <div className="p-3 bg-primary/10 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Valor Final:</span>
-                    <span className="text-lg font-bold text-primary">
-                      R$ {calcularValorFinal().toLocaleString("pt-BR", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </span>
-                  </div>
-                </div>
-              )}
+                    {formData.valorVeiculo && (
+                      <div className="p-3 bg-primary/10 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Valor Final:</span>
+                          <span className="text-lg font-bold text-primary">
+                            R$ {calcularValorFinal().toLocaleString("pt-BR", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </span>
+                        </div>
+                      </div>
+                    )}
 
-              {/* Forma de Pagamento */}
-              <div className="space-y-2">
-                <Label htmlFor="formaPagamento">Forma de Pagamento</Label>
-                <Select
-                  value={formData.formaPagamento}
-                  onValueChange={(value) => handleSelectChange("formaPagamento", value)}
-                >
-                  <SelectTrigger id="formaPagamento">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="À vista">À vista</SelectItem>
-                    <SelectItem value="Financiamento">Financiamento</SelectItem>
-                    <SelectItem value="Consórcio">Consórcio</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="formaPagamento">Forma de Pagamento</Label>
+                      <Select
+                        value={formData.formaPagamento}
+                        onValueChange={(value) => handleSelectChange("formaPagamento", value)}
+                      >
+                        <SelectTrigger id="formaPagamento">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="À vista">À vista</SelectItem>
+                          <SelectItem value="Financiamento">Financiamento</SelectItem>
+                          <SelectItem value="Consórcio">Consórcio</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-              {/* Entrada */}
-              <div className="space-y-2">
-                <Label htmlFor="entrada">Entrada (R$)</Label>
-                <Input
-                  id="entrada"
-                  name="entrada"
-                  type="number"
-                  value={formData.entrada}
-                  onChange={handleChange}
-                  placeholder="30000"
-                />
-              </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="entrada">Entrada (R$)</Label>
+                      <Input
+                        id="entrada"
+                        name="entrada"
+                        type="number"
+                        value={formData.entrada}
+                        onChange={handleChange}
+                        placeholder="30000"
+                      />
+                    </div>
 
-              {/* Parcelas (se financiamento) */}
-              {formData.formaPagamento === "Financiamento" && (
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="numeroParcelas">Nº Parcelas</Label>
-                    <Input
-                      id="numeroParcelas"
-                      name="numeroParcelas"
-                      type="number"
-                      value={formData.numeroParcelas}
-                      onChange={handleChange}
-                      placeholder="60"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="valorParcela">Valor Parcela (R$)</Label>
-                    <Input
-                      id="valorParcela"
-                      name="valorParcela"
-                      type="number"
-                      value={formData.valorParcela}
-                      onChange={handleChange}
-                      placeholder="2500"
-                    />
-                  </div>
-                </div>
-              )}
+                    {formData.formaPagamento === "Financiamento" && (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="numeroParcelas">Nº Parcelas</Label>
+                          <Input
+                            id="numeroParcelas"
+                            name="numeroParcelas"
+                            type="number"
+                            value={formData.numeroParcelas}
+                            onChange={handleChange}
+                            placeholder="60"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="valorParcela">Valor Parcela (R$)</Label>
+                          <Input
+                            id="valorParcela"
+                            name="valorParcela"
+                            type="number"
+                            value={formData.valorParcela}
+                            onChange={handleChange}
+                            placeholder="2500"
+                          />
+                        </div>
+                      </div>
+                    )}
 
-              {/* Validade */}
-              <div className="space-y-2">
-                <Label htmlFor="validade">
-                  Validade <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="validade"
-                  name="validade"
-                  type="date"
-                  value={formData.validade}
-                  onChange={handleChange}
-                  min={new Date().toISOString().split("T")[0]}
-                  required
-                />
-              </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="validade">
+                        Validade <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="validade"
+                        name="validade"
+                        type="date"
+                        value={formData.validade}
+                        onChange={handleChange}
+                        min={new Date().toISOString().split("T")[0]}
+                        required
+                      />
+                    </div>
 
-              {/* Observações */}
-              <div className="space-y-2">
-                <Label htmlFor="observacoes">Observações</Label>
-                <textarea
-                  id="observacoes"
-                  name="observacoes"
-                  value={formData.observacoes}
-                  onChange={handleChange}
-                  placeholder="Observações sobre a proposta..."
-                  className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                  rows={3}
-                />
-              </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="observacoes">Observações</Label>
+                      <textarea
+                        id="observacoes"
+                        name="observacoes"
+                        value={formData.observacoes}
+                        onChange={handleChange}
+                        placeholder="Observações sobre a proposta..."
+                        className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                        rows={3}
+                      />
+                    </div>
 
                     <Button type="submit" className="w-full">
                       Criar Proposta
@@ -523,148 +503,147 @@ export default function PropostasPage() {
           </div>
         </CardHeader>
         <CardContent>
-            {propostasFiltradas.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Nenhuma proposta encontrada com os filtros aplicados.
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {propostasFiltradas.map((proposta) => {
-                  const hoje = new Date().toISOString().split("T")[0]
-                  const vencida = proposta.validade < hoje && proposta.status === "pendente"
-                  
-                  return (
-                    <div
-                      key={proposta.id}
-                      className={`border-2 rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-3 ${
-                        vencida
-                          ? "border-red-300 bg-red-50/50 dark:bg-red-950/10"
-                          : proposta.status === "pendente"
-                            ? "border-yellow-200 bg-yellow-50/30 dark:bg-yellow-950/10"
-                            : proposta.status === "aceita"
-                              ? "border-green-200 bg-green-50/30 dark:bg-green-950/10"
-                              : "border-gray-200"
+          {propostasFiltradas.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Nenhuma proposta encontrada com os filtros aplicados.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {propostasFiltradas.map((proposta) => {
+                const hoje = new Date().toISOString().split("T")[0]
+                const vencida = proposta.validade < hoje && proposta.status === "pendente"
+
+                return (
+                  <div
+                    key={proposta.id}
+                    className={`border-2 rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-3 ${vencida
+                      ? "border-red-300 bg-red-50/50 dark:bg-red-950/10"
+                      : proposta.status === "pendente"
+                        ? "border-yellow-200 bg-yellow-50/30 dark:bg-yellow-950/10"
+                        : proposta.status === "aceita"
+                          ? "border-green-200 bg-green-50/30 dark:bg-green-950/10"
+                          : "border-gray-200"
                       }`}
-                    >
-                      <div className="flex flex-col sm:flex-row items-start sm:items-start justify-between gap-3">
-                        <div className="flex-1 space-y-2 w-full">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="font-semibold text-base sm:text-lg">{proposta.numero}</h3>
-                            {getStatusBadge(proposta.status, proposta.validade)}
-                          </div>
-                          
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                            <div className="flex items-center gap-1 sm:gap-2">
-                              <IconUser className="size-3 sm:size-4 text-muted-foreground" />
-                              <span className="font-medium">{proposta.clienteNome}</span>
-                            </div>
-                            <span className="text-muted-foreground hidden sm:inline">•</span>
-                            <span className="text-muted-foreground text-xs sm:text-sm">{proposta.clienteTelefone}</span>
-                          </div>
+                  >
+                    <div className="flex flex-col sm:flex-row items-start sm:items-start justify-between gap-3">
+                      <div className="flex-1 space-y-2 w-full">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-semibold text-base sm:text-lg">{proposta.numero}</h3>
+                          {getStatusBadge(proposta.status, proposta.validade)}
+                        </div>
 
-                          <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                            <IconCar className="size-3 sm:size-4 text-muted-foreground" />
-                            <span className="break-words">{proposta.veiculoDescricao}</span>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                          <div className="flex items-center gap-1 sm:gap-2">
+                            <IconUser className="size-3 sm:size-4 text-muted-foreground" />
+                            <span className="font-medium">{proposta.clienteNome}</span>
                           </div>
+                          <span className="text-muted-foreground hidden sm:inline">•</span>
+                          <span className="text-muted-foreground text-xs sm:text-sm">{proposta.clienteTelefone}</span>
+                        </div>
 
-                          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 pt-2 border-t">
-                            <div>
-                              <p className="text-[10px] sm:text-xs text-muted-foreground">Valor Veículo</p>
-                              <p className="font-semibold text-xs sm:text-sm">
-                                R$ {parseFloat(proposta.valorVeiculo).toLocaleString("pt-BR", {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })}
-                              </p>
-                            </div>
-                            {parseFloat(proposta.desconto) > 0 && (
-                              <div>
-                                <p className="text-[10px] sm:text-xs text-muted-foreground">Desconto</p>
-                                <p className="font-semibold text-green-600 text-xs sm:text-sm">
-                                  - R$ {parseFloat(proposta.desconto).toLocaleString("pt-BR", {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                  })}
-                                </p>
-                              </div>
-                            )}
-                            <div>
-                              <p className="text-[10px] sm:text-xs text-muted-foreground">Valor Final</p>
-                              <p className="font-semibold text-primary text-sm sm:text-lg">
-                                R$ {parseFloat(proposta.valorFinal).toLocaleString("pt-BR", {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-[10px] sm:text-xs text-muted-foreground">Forma Pagamento</p>
-                              <p className="font-semibold text-xs sm:text-sm break-words">{proposta.formaPagamento}</p>
-                            </div>
-                          </div>
+                        <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                          <IconCar className="size-3 sm:size-4 text-muted-foreground" />
+                          <span className="break-words">{proposta.veiculoDescricao}</span>
+                        </div>
 
-                          {proposta.formaPagamento === "Financiamento" && proposta.parcelas !== "-" && (
-                            <div className="text-xs sm:text-sm">
-                              <span className="text-muted-foreground">Entrada: </span>
-                              <span className="font-medium">
-                                R$ {parseFloat(proposta.entrada).toLocaleString("pt-BR", {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })}
-                              </span>
-                              <span className="text-muted-foreground"> • Parcelas: </span>
-                              <span className="font-medium break-words">{proposta.parcelas}</span>
-                            </div>
-                          )}
-
-                          {proposta.observacoes && (
-                            <p className="text-xs sm:text-sm text-muted-foreground italic break-words">
-                              {proposta.observacoes}
+                        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 pt-2 border-t">
+                          <div>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground">Valor Veículo</p>
+                            <p className="font-semibold text-xs sm:text-sm">
+                              R$ {parseFloat(proposta.valorVeiculo).toLocaleString("pt-BR", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
                             </p>
+                          </div>
+                          {parseFloat(proposta.desconto) > 0 && (
+                            <div>
+                              <p className="text-[10px] sm:text-xs text-muted-foreground">Desconto</p>
+                              <p className="font-semibold text-green-600 text-xs sm:text-sm">
+                                - R$ {parseFloat(proposta.desconto).toLocaleString("pt-BR", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </p>
+                            </div>
                           )}
-
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-[10px] sm:text-xs text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <IconCalendar className="size-3" />
-                              <span>Criada: {formatarData(proposta.dataCriacao)}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <IconClock className="size-3" />
-                              <span>Válida até: {formatarData(proposta.validade)}</span>
-                            </div>
+                          <div>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground">Valor Final</p>
+                            <p className="font-semibold text-primary text-sm sm:text-lg">
+                              R$ {parseFloat(proposta.valorFinal).toLocaleString("pt-BR", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground">Forma Pagamento</p>
+                            <p className="font-semibold text-xs sm:text-sm break-words">{proposta.formaPagamento}</p>
                           </div>
                         </div>
 
-                        {proposta.status === "pendente" && (
-                          <div className="flex flex-row sm:flex-col gap-2 w-full sm:w-auto">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleStatusChange(proposta.id, "aceita")}
-                              className="text-green-600 hover:text-green-700 flex-1 sm:flex-none text-xs sm:text-sm"
-                            >
-                              <IconCheck className="size-3 sm:size-4 mr-1" />
-                              Aceitar
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleStatusChange(proposta.id, "recusada")}
-                              className="text-red-600 hover:text-red-700 flex-1 sm:flex-none text-xs sm:text-sm"
-                            >
-                              <IconX className="size-3 sm:size-4 mr-1" />
-                              Recusar
-                            </Button>
+                        {proposta.formaPagamento === "Financiamento" && proposta.parcelas !== "-" && (
+                          <div className="text-xs sm:text-sm">
+                            <span className="text-muted-foreground">Entrada: </span>
+                            <span className="font-medium">
+                              R$ {parseFloat(proposta.entrada).toLocaleString("pt-BR", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </span>
+                            <span className="text-muted-foreground"> • Parcelas: </span>
+                            <span className="font-medium break-words">{proposta.parcelas}</span>
                           </div>
                         )}
+
+                        {proposta.observacoes && (
+                          <p className="text-xs sm:text-sm text-muted-foreground italic break-words">
+                            {proposta.observacoes}
+                          </p>
+                        )}
+
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-[10px] sm:text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <IconCalendar className="size-3" />
+                            <span>Criada: {formatarData(proposta.dataCriacao)}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <IconClock className="size-3" />
+                            <span>Válida até: {formatarData(proposta.validade)}</span>
+                          </div>
+                        </div>
                       </div>
+
+                      {proposta.status === "pendente" && (
+                        <div className="flex flex-row sm:flex-col gap-2 w-full sm:w-auto">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleStatusChange(proposta.id, "aceita")}
+                            className="text-green-600 hover:text-green-700 flex-1 sm:flex-none text-xs sm:text-sm"
+                          >
+                            <IconCheck className="size-3 sm:size-4 mr-1" />
+                            Aceitar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleStatusChange(proposta.id, "recusada")}
+                            className="text-red-600 hover:text-red-700 flex-1 sm:flex-none text-xs sm:text-sm"
+                          >
+                            <IconX className="size-3 sm:size-4 mr-1" />
+                            Recusar
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                  )
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

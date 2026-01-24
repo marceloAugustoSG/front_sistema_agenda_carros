@@ -17,7 +17,6 @@ import {
   Tooltip,
 } from "recharts"
 
-// Dados mockados para vendas
 const vendasPorPeriodo = [
   { mes: "Jan", vendas: 12, valor: 1800000 },
   { mes: "Fev", vendas: 15, valor: 2250000 },
@@ -27,7 +26,6 @@ const vendasPorPeriodo = [
   { mes: "Jun", vendas: 25, valor: 3750000 },
 ]
 
-// Veículos mais procurados
 const veiculosMaisProcurados = [
   { nome: "Toyota Corolla", interesses: 45, vendas: 12 },
   { nome: "Honda Civic", interesses: 38, vendas: 10 },
@@ -36,7 +34,6 @@ const veiculosMaisProcurados = [
   { nome: "Chevrolet Onix", interesses: 25, vendas: 6 },
 ]
 
-// Distribuição por marca
 const vendasPorMarca = [
   { name: "Toyota", value: 35, color: "#3b82f6" },
   { name: "Honda", value: 28, color: "#10b981" },
@@ -44,7 +41,6 @@ const vendasPorMarca = [
   { name: "Ford", value: 15, color: "#ef4444" },
 ]
 
-// Interesses vs Vendas
 const interessesVsVendas = [
   { mes: "Jan", interesses: 65, vendas: 12, taxa: 18.5 },
   { mes: "Fev", interesses: 72, vendas: 15, taxa: 20.8 },
@@ -54,7 +50,6 @@ const interessesVsVendas = [
   { mes: "Jun", interesses: 105, vendas: 25, taxa: 23.8 },
 ]
 
-// Métricas principais
 const metricas = {
   vendasMes: 25,
   valorTotal: 3750000,
@@ -64,7 +59,6 @@ const metricas = {
   interessesConvertidos: 25,
 }
 
-// Clientes mais ativos
 const clientesMaisAtivos = [
   { nome: "João Silva", interesses: 5, ultimaInteracao: "2 dias atrás" },
   { nome: "Maria Santos", interesses: 4, ultimaInteracao: "1 dia atrás" },
@@ -73,7 +67,6 @@ const clientesMaisAtivos = [
   { nome: "Carlos Souza", interesses: 2, ultimaInteracao: "5 dias atrás" },
 ]
 
-// Tempo médio no estoque
 const tempoMedioEstoque = [
   { marca: "Toyota", dias: 12 },
   { marca: "Honda", dias: 15 },
@@ -85,7 +78,6 @@ const tempoMedioEstoque = [
 export default function EstatisticasPage() {
   return (
     <div className="px-4 lg:px-6 space-y-6">
-      {/* Métricas Principais */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
@@ -156,9 +148,7 @@ export default function EstatisticasPage() {
         </Card>
       </div>
 
-      {/* Gráficos Principais */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Vendas ao Longo do Tempo */}
         <Card>
           <CardHeader>
             <CardTitle>Vendas ao Longo do Tempo</CardTitle>
@@ -217,7 +207,6 @@ export default function EstatisticasPage() {
           </CardContent>
         </Card>
 
-        {/* Distribuição por Marca */}
         <Card>
           <CardHeader>
             <CardTitle>Vendas por Marca</CardTitle>
@@ -257,7 +246,6 @@ export default function EstatisticasPage() {
         </Card>
       </div>
 
-      {/* Interesses vs Vendas */}
       <Card>
         <CardHeader>
           <CardTitle>Interesses vs Vendas</CardTitle>
@@ -301,7 +289,6 @@ export default function EstatisticasPage() {
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Veículos Mais Procurados */}
         <Card>
           <CardHeader>
             <CardTitle>Veículos Mais Procurados</CardTitle>
@@ -335,7 +322,6 @@ export default function EstatisticasPage() {
           </CardContent>
         </Card>
 
-        {/* Clientes Mais Ativos */}
         <Card>
           <CardHeader>
             <CardTitle>Clientes Mais Ativos</CardTitle>
@@ -359,7 +345,6 @@ export default function EstatisticasPage() {
         </Card>
       </div>
 
-      {/* Tempo Médio no Estoque */}
       <Card>
         <CardHeader>
           <CardTitle>Tempo Médio no Estoque</CardTitle>
@@ -408,7 +393,6 @@ export default function EstatisticasPage() {
         </CardContent>
       </Card>
 
-      {/* Insights */}
       <Card>
         <CardHeader>
           <CardTitle>Insights e Recomendações</CardTitle>

@@ -31,7 +31,6 @@ export default function ForgotPasswordPage() {
       return
     }
 
-    // Validação básica de email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
       toast.error("Por favor, informe um e-mail válido")
@@ -40,7 +39,6 @@ export default function ForgotPasswordPage() {
 
     setIsLoading(true)
 
-    // Simulação de envio (em produção, aqui seria a chamada à API)
     setTimeout(() => {
       setIsLoading(false)
       toast.success("E-mail de recuperação enviado! Verifique sua caixa de entrada.")

@@ -55,7 +55,6 @@ export default function VeiculosPage() {
   const [filtroStatus, setFiltroStatus] = useState<string>("todos")
   const [modalAberto, setModalAberto] = useState<boolean>(false)
 
-  // Carregar veículos do localStorage ao montar o componente
   useEffect(() => {
     const veiculosCarregados = getVeiculos()
     setVeiculos(veiculosCarregados)
@@ -72,14 +71,12 @@ export default function VeiculosPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    
-    // Validação básica
+
     if (!formData.marca || !formData.modelo || !formData.ano || !formData.placa) {
       toast.error("Por favor, preencha todos os campos obrigatórios")
       return
     }
 
-    // Verificar se a placa já existe
     const placaExiste = veiculos.some(
       (v) => v.placa.toLowerCase() === formData.placa.toLowerCase()
     )
@@ -102,14 +99,11 @@ export default function VeiculosPage() {
       status: formData.status,
     }
 
-    // Salvar no localStorage
     addVeiculo(novoVeiculo)
-    
-    // Atualizar estado
+
     setVeiculos((prev) => [novoVeiculo, ...prev])
     toast.success("Veículo cadastrado com sucesso!")
-    
-    // Limpar formulário e fechar modal
+
     setFormData({
       marca: "",
       modelo: "",
@@ -376,121 +370,118 @@ export default function VeiculosPage() {
             </Dialog>
           </div>
         </CardHeader>
-            <CardContent>
-              {/* Filtros */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div className="relative">
-                  <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar por marca, modelo, placa ou cor..."
-                    value={busca}
-                    onChange={(e) => setBusca(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-                <Select value={filtroStatus} onValueChange={setFiltroStatus}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos os Status</SelectItem>
-                    <SelectItem value="disponivel">Disponível</SelectItem>
-                    <SelectItem value="reservado">Reservado</SelectItem>
-                    <SelectItem value="vendido">Vendido</SelectItem>
-                    <SelectItem value="manutencao">Em Manutenção</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="relative">
+              <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por marca, modelo, placa ou cor..."
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Select value={filtroStatus} onValueChange={setFiltroStatus}>
+              <SelectTrigger>
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os Status</SelectItem>
+                <SelectItem value="disponivel">Disponível</SelectItem>
+                <SelectItem value="reservado">Reservado</SelectItem>
+                <SelectItem value="vendido">Vendido</SelectItem>
+                <SelectItem value="manutencao">Em Manutenção</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-              {/* Estatísticas */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 p-4 bg-muted/50 rounded-lg">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-green-600">
-                    {veiculos.filter((v) => v.status === "disponivel").length}
-                  </p>
-                  <p className="text-xs sm:text-sm text-muted-foreground">Disponíveis</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-yellow-600">
-                    {veiculos.filter((v) => v.status === "reservado").length}
-                  </p>
-                  <p className="text-xs sm:text-sm text-muted-foreground">Reservados</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold">
-                    {veiculos.filter((v) => v.status === "vendido").length}
-                  </p>
-                  <p className="text-xs sm:text-sm text-muted-foreground">Vendidos</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold">{veiculos.length}</p>
-                  <p className="text-xs sm:text-sm text-muted-foreground">Total</p>
-                </div>
-              </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 p-4 bg-muted/50 rounded-lg">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-green-600">
+                {veiculos.filter((v) => v.status === "disponivel").length}
+              </p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Disponíveis</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-yellow-600">
+                {veiculos.filter((v) => v.status === "reservado").length}
+              </p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Reservados</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold">
+                {veiculos.filter((v) => v.status === "vendido").length}
+              </p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Vendidos</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold">{veiculos.length}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Total</p>
+            </div>
+          </div>
 
-              {/* Lista de Veículos */}
-              {veiculosFiltrados.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  {busca || filtroStatus !== "todos" 
-                    ? "Nenhum veículo encontrado com os filtros aplicados" 
-                    : "Nenhum veículo cadastrado ainda"}
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {veiculosFiltrados.map((veiculo) => (
-                    <Card key={veiculo.id} className="hover:shadow-md transition-shadow">
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <CardTitle className="text-lg">
-                              {veiculo.marca} {veiculo.modelo}
-                            </CardTitle>
-                            <CardDescription className="mt-1">
-                              {veiculo.ano} • {veiculo.cor}
-                            </CardDescription>
-                          </div>
-                          {getStatusBadge(veiculo.status)}
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-2">
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                          <div>
-                            <span className="text-muted-foreground">Placa:</span>
-                            <p className="font-medium">{veiculo.placa}</p>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Combustível:</span>
-                            <p className="font-medium">{getCombustivelLabel(veiculo.combustivel)}</p>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Quilometragem:</span>
-                            <p className="font-medium">
-                              {parseInt(veiculo.quilometragem || "0").toLocaleString("pt-BR")} km
-                            </p>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Valor:</span>
-                            <p className="font-medium text-lg text-primary">
-                              R$ {parseFloat(veiculo.valor || "0").toLocaleString("pt-BR", {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
-                            </p>
-                          </div>
-                        </div>
-                        {veiculo.chassi && (
-                          <div className="pt-2 border-t text-xs text-muted-foreground">
-                            <span>Chassi: </span>
-                            <span className="font-mono">{veiculo.chassi}</span>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {veiculosFiltrados.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              {busca || filtroStatus !== "todos"
+                ? "Nenhum veículo encontrado com os filtros aplicados"
+                : "Nenhum veículo cadastrado ainda"}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {veiculosFiltrados.map((veiculo) => (
+                <Card key={veiculo.id} className="hover:shadow-md transition-shadow">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="text-lg">
+                          {veiculo.marca} {veiculo.modelo}
+                        </CardTitle>
+                        <CardDescription className="mt-1">
+                          {veiculo.ano} • {veiculo.cor}
+                        </CardDescription>
+                      </div>
+                      {getStatusBadge(veiculo.status)}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Placa:</span>
+                        <p className="font-medium">{veiculo.placa}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Combustível:</span>
+                        <p className="font-medium">{getCombustivelLabel(veiculo.combustivel)}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Quilometragem:</span>
+                        <p className="font-medium">
+                          {parseInt(veiculo.quilometragem || "0").toLocaleString("pt-BR")} km
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Valor:</span>
+                        <p className="font-medium text-lg text-primary">
+                          R$ {parseFloat(veiculo.valor || "0").toLocaleString("pt-BR", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    {veiculo.chassi && (
+                      <div className="pt-2 border-t text-xs text-muted-foreground">
+                        <span>Chassi: </span>
+                        <span className="font-mono">{veiculo.chassi}</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

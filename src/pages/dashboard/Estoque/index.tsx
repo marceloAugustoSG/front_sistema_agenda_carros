@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -9,14 +9,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-
-import { useState, useEffect } from "react"
 import { getVeiculos, type Veiculo } from "@/utils/storage"
 
 export default function EstoquePage() {
   const [veiculos, setVeiculos] = useState<Veiculo[]>([])
 
-  // Carregar veículos do localStorage
   useEffect(() => {
     setVeiculos(getVeiculos())
   }, [])

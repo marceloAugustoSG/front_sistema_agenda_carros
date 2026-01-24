@@ -9,7 +9,6 @@ import {
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  // Detecta tema escuro do sistema ou usa light como padrão
   const [theme, setTheme] = React.useState<"light" | "dark">("light")
 
   React.useEffect(() => {

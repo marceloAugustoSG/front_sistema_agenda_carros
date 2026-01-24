@@ -17,24 +17,21 @@ const pageTitles: Record<string, string> = {
 
 export function SiteHeader() {
   const location = useLocation()
-  
-  // Encontra o título correspondente à rota atual
+
   const getPageTitle = () => {
-    // Verifica se a rota exata existe
     if (pageTitles[location.pathname]) {
       return pageTitles[location.pathname]
     }
-    
-    // Se não encontrar, procura por rotas que começam com o pathname
-    const matchingRoute = Object.keys(pageTitles).find(route => 
+
+    const matchingRoute = Object.keys(pageTitles).find(route =>
       location.pathname.startsWith(route) && route !== "/dashboard"
     )
-    
+
     return matchingRoute ? pageTitles[matchingRoute] : "Início"
   }
 
   return (
-    <header 
+    <header
       className="flex shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear"
       style={{ height: "var(--header-height)" }}
     >

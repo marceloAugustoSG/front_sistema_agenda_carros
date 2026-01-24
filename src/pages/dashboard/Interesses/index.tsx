@@ -45,14 +45,12 @@ export default function InteressesPage() {
   const [sugestoesVisiveis, setSugestoesVisiveis] = useState(false)
   const [veiculoBuscado, setVeiculoBuscado] = useState<{ marca: string; modelo: string; ano: string } | null>(null)
 
-  // Carregar dados do localStorage
   useEffect(() => {
     setClientes(getClientes())
     setVeiculos(getVeiculos())
     setInteresses(getInteresses())
   }, [])
 
-  // Atualizar clientes filtrados quando clientes ou busca mudar
   useEffect(() => {
     if (buscaCliente.trim() === "") {
       setClientesFiltrados(clientes)
@@ -68,9 +66,7 @@ export default function InteressesPage() {
     }
   }, [buscaCliente, clientes])
 
-  // Função para extrair marca, modelo e ano do veículo
   const parsearVeiculo = (veiculoString: string) => {
-    // Formato esperado: "Toyota Corolla 2024" ou "Honda Civic 2023"
     const partes = veiculoString.trim().split(" ")
     if (partes.length >= 3) {
       const ano = partes[partes.length - 1]
@@ -81,7 +77,6 @@ export default function InteressesPage() {
     return { marca: "", modelo: "", ano: "" }
   }
 
-  // Encontrar cliente pelo nome ou telefone
   const encontrarCliente = (nome?: string, telefone?: string) => {
     if (!nome && !telefone) return null
     return clientes.find(
@@ -91,7 +86,6 @@ export default function InteressesPage() {
     )
   }
 
-  // Preencher veículo completo
   const handleVeiculoCompleto = (valor: string) => {
     setVeiculoCompleto(valor)
     if (valor.trim() !== "") {
@@ -105,7 +99,6 @@ export default function InteressesPage() {
     }
   }
 
-  // Cadastro rápido - só com dados essenciais
   const handleCadastroRapido = (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -137,10 +130,8 @@ export default function InteressesPage() {
       status: emEstoque ? "atendido" : "pendente",
     }
 
-    // Salvar no localStorage
     addInteresse(novoInteresse)
-    
-    // Atualizar estado
+
     setInteresses((prev) => [novoInteresse, ...prev])
 
     if (emEstoque) {
@@ -156,7 +147,6 @@ export default function InteressesPage() {
       setSugestoesVisiveis(true)
     }
 
-    // Limpar formulário
     setFormData({
       clienteId: "",
       marca: "",
@@ -168,8 +158,7 @@ export default function InteressesPage() {
     })
     setVeiculoCompleto("")
     setBuscaCliente("")
-    
-    // Mostrar sugestões se não estiver em estoque
+
     if (!emEstoque) {
       setVeiculoBuscado({ marca: formData.marca, modelo: formData.modelo, ano: formData.ano })
       setSugestoesVisiveis(true)
@@ -178,7 +167,6 @@ export default function InteressesPage() {
     }
   }
 
-  // Preencher formulário automaticamente se vier da Home
   useEffect(() => {
     if (preenchimentoAutomatico) {
       const cliente = encontrarCliente(
@@ -203,7 +191,6 @@ export default function InteressesPage() {
           clienteId: cliente.id,
         }))
       } else if (preenchimentoAutomatico.clienteNome) {
-        // Se o cliente não foi encontrado, mas temos o nome, tentar buscar de forma mais flexível
         const clienteAlternativo = clientes.find((c) =>
           c.nome.toLowerCase().includes(preenchimentoAutomatico.clienteNome!.toLowerCase())
         )
@@ -226,7 +213,6 @@ export default function InteressesPage() {
         }
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
 
@@ -249,15 +235,12 @@ export default function InteressesPage() {
     )
   }
 
-  // Buscar veículos similares disponíveis
   const buscarVeiculosSimilares = (marca: string, modelo: string, ano: string) => {
     const veiculosDisponiveis = veiculos.filter((v) => v.status === "disponivel")
-    
-    // Prioridade: Mesma marca, modelo similar, ano próximo
+
     const anoNum = parseInt(ano)
     const veiculosSimilares = veiculosDisponiveis
       .filter((v) => {
-        // Não incluir o próprio veículo
         if (
           v.marca.toLowerCase() === marca.toLowerCase() &&
           v.modelo.toLowerCase() === modelo.toLowerCase() &&
@@ -269,18 +252,15 @@ export default function InteressesPage() {
       })
       .map((v) => {
         let score = 0
-        // Mesma marca = +3 pontos
         if (v.marca.toLowerCase() === marca.toLowerCase()) score += 3
-        // Mesmo modelo (ano diferente) = +2 pontos
         if (v.modelo.toLowerCase() === modelo.toLowerCase()) score += 2
-        // Ano próximo = +1 ponto
         const anoV = parseInt(v.ano)
         if (Math.abs(anoV - anoNum) <= 1) score += 1
-        
+
         return { ...v, score }
       })
       .sort((a, b) => b.score - a.score)
-      .slice(0, 3) // Top 3 sugestões
+      .slice(0, 3)
 
     return veiculosSimilares
   }
@@ -288,7 +268,6 @@ export default function InteressesPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Validação básica
     if (!formData.clienteId || !formData.marca || !formData.modelo || !formData.ano) {
       toast.error("Por favor, preencha cliente, marca, modelo e ano")
       return
@@ -300,7 +279,6 @@ export default function InteressesPage() {
       return
     }
 
-    // Verificar se o veículo está em estoque
     const emEstoque = verificarEstoque(formData.marca, formData.modelo, formData.ano)
 
     const novoInteresse: Interesse = {
@@ -318,14 +296,11 @@ export default function InteressesPage() {
       status: emEstoque ? "atendido" : "pendente",
     }
 
-    // Salvar no localStorage
     addInteresse(novoInteresse)
-    
-    // Atualizar estado
+
     setInteresses((prev) => [novoInteresse, ...prev])
 
     if (emEstoque) {
-      // Veículo está em estoque - notificar cliente
       toast.success(
         `Veículo encontrado em estoque! Cliente ${cliente.nome} será notificado.`,
         {
@@ -334,7 +309,6 @@ export default function InteressesPage() {
       )
       setSugestoesVisiveis(false)
     } else {
-      // Veículo não está em estoque - cadastrar interesse e mostrar sugestões
       toast.info(
         `Interesse cadastrado! Cliente ${cliente.nome} será notificado quando o veículo chegar ao estoque.`,
         {
@@ -345,7 +319,6 @@ export default function InteressesPage() {
       setSugestoesVisiveis(true)
     }
 
-    // Limpar formulário
     setFormData({
       clienteId: "",
       marca: "",
@@ -361,16 +334,13 @@ export default function InteressesPage() {
     const interesse = interesses.find((i) => i.id === interesseId)
     if (!interesse) return
 
-    // Verificar novamente se está em estoque
     const emEstoque = verificarEstoque(interesse.marca, interesse.modelo, interesse.ano)
 
     if (emEstoque) {
-      // Atualizar no localStorage
-      updateInteresse(interesseId, { status: "atendido" })
-      
-      // Atualizar estado
+      updateInteresse(interesseId, { status: "atendido", notificado: true })
+
       setInteresses((prev) =>
-        prev.map((i) => (i.id === interesseId ? { ...i, status: "atendido" } : i))
+        prev.map((i) => (i.id === interesseId ? { ...i, status: "atendido", notificado: true } : i))
       )
       toast.success(`Cliente ${interesse.clienteNome} notificado com sucesso!`)
     } else {
@@ -402,7 +372,6 @@ export default function InteressesPage() {
         </CardHeader>
         <CardContent>
           {modoRapido ? (
-            // Formulário Rápido
             <form onSubmit={handleCadastroRapido} className="space-y-4">
               <div className="p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg">
                 <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
@@ -415,7 +384,6 @@ export default function InteressesPage() {
               </div>
 
               <div className="space-y-4">
-                {/* Busca Rápida de Cliente */}
                 <div className="space-y-2">
                   <Label htmlFor="buscaCliente">
                     Buscar Cliente <span className="text-destructive">*</span>
@@ -462,7 +430,6 @@ export default function InteressesPage() {
                   )}
                 </div>
 
-                {/* Veículo Completo */}
                 <div className="space-y-2">
                   <Label htmlFor="veiculoCompleto">
                     Veículo <span className="text-destructive">*</span>
@@ -478,7 +445,6 @@ export default function InteressesPage() {
                   </p>
                 </div>
 
-                {/* Campos Separados (opcionais se preencheu o campo completo) */}
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="marca-rapido">Marca</Label>
@@ -543,10 +509,8 @@ export default function InteressesPage() {
               </div>
             </form>
           ) : (
-            // Formulário Completo
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Cliente */}
                 <div className="space-y-2">
                   <Label htmlFor="clienteId">
                     Cliente <span className="text-destructive">*</span>
@@ -568,120 +532,113 @@ export default function InteressesPage() {
                   </Select>
                 </div>
 
-              {/* Marca */}
-              <div className="space-y-2">
-                <Label htmlFor="marca">
-                  Marca <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="marca"
-                  name="marca"
-                  value={formData.marca}
-                  onChange={handleChange}
-                  placeholder="Ex: Toyota, Honda, Ford..."
-                  required
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="marca">
+                    Marca <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="marca"
+                    name="marca"
+                    value={formData.marca}
+                    onChange={handleChange}
+                    placeholder="Ex: Toyota, Honda, Ford..."
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="modelo">
+                    Modelo <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="modelo"
+                    name="modelo"
+                    value={formData.modelo}
+                    onChange={handleChange}
+                    placeholder="Ex: Corolla, Civic, Fiesta..."
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="ano">
+                    Ano <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="ano"
+                    name="ano"
+                    type="number"
+                    value={formData.ano}
+                    onChange={handleChange}
+                    placeholder="Ex: 2024"
+                    min="1900"
+                    max={new Date().getFullYear() + 1}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="cor">Cor</Label>
+                  <Input
+                    id="cor"
+                    name="cor"
+                    value={formData.cor}
+                    onChange={handleChange}
+                    placeholder="Ex: Branco, Preto, Prata..."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="valorMaximo">Valor Máximo (R$)</Label>
+                  <Input
+                    id="valorMaximo"
+                    name="valorMaximo"
+                    type="number"
+                    value={formData.valorMaximo}
+                    onChange={handleChange}
+                    placeholder="0.00"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="observacoes">Observações</Label>
+                  <textarea
+                    id="observacoes"
+                    name="observacoes"
+                    value={formData.observacoes}
+                    onChange={handleChange}
+                    placeholder="Informações adicionais sobre o interesse do cliente"
+                    className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                    rows={4}
+                  />
+                </div>
               </div>
 
-              {/* Modelo */}
-              <div className="space-y-2">
-                <Label htmlFor="modelo">
-                  Modelo <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="modelo"
-                  name="modelo"
-                  value={formData.modelo}
-                  onChange={handleChange}
-                  placeholder="Ex: Corolla, Civic, Fiesta..."
-                  required
-                />
+              <div className="flex justify-end gap-4 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setFormData({
+                      clienteId: "",
+                      marca: "",
+                      modelo: "",
+                      ano: "",
+                      cor: "",
+                      valorMaximo: "",
+                      observacoes: "",
+                    })
+                  }}
+                >
+                  Limpar
+                </Button>
+                <Button type="submit">Cadastrar Interesse</Button>
               </div>
-
-              {/* Ano */}
-              <div className="space-y-2">
-                <Label htmlFor="ano">
-                  Ano <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="ano"
-                  name="ano"
-                  type="number"
-                  value={formData.ano}
-                  onChange={handleChange}
-                  placeholder="Ex: 2024"
-                  min="1900"
-                  max={new Date().getFullYear() + 1}
-                  required
-                />
-              </div>
-
-              {/* Cor */}
-              <div className="space-y-2">
-                <Label htmlFor="cor">Cor</Label>
-                <Input
-                  id="cor"
-                  name="cor"
-                  value={formData.cor}
-                  onChange={handleChange}
-                  placeholder="Ex: Branco, Preto, Prata..."
-                />
-              </div>
-
-              {/* Valor Máximo */}
-              <div className="space-y-2">
-                <Label htmlFor="valorMaximo">Valor Máximo (R$)</Label>
-                <Input
-                  id="valorMaximo"
-                  name="valorMaximo"
-                  type="number"
-                  value={formData.valorMaximo}
-                  onChange={handleChange}
-                  placeholder="0.00"
-                  min="0"
-                  step="0.01"
-                />
-              </div>
-
-              {/* Observações */}
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="observacoes">Observações</Label>
-                <textarea
-                  id="observacoes"
-                  name="observacoes"
-                  value={formData.observacoes}
-                  onChange={handleChange}
-                  placeholder="Informações adicionais sobre o interesse do cliente"
-                  className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                  rows={4}
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-4 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setFormData({
-                    clienteId: "",
-                    marca: "",
-                    modelo: "",
-                    ano: "",
-                    cor: "",
-                    valorMaximo: "",
-                    observacoes: "",
-                  })
-                }}
-              >
-                Limpar
-              </Button>
-              <Button type="submit">Cadastrar Interesse</Button>
-            </div>
-          </form>
+            </form>
           )}
 
-          {/* Sugestões Inteligentes */}
           {sugestoesVisiveis && veiculoBuscado && (
             <Card className="mt-6 border-2 border-blue-200 bg-blue-50/50 dark:bg-blue-950/10">
               <CardHeader>
@@ -730,7 +687,6 @@ export default function InteressesPage() {
                               className="w-full"
                               size="sm"
                               onClick={() => {
-                                // Preencher formulário com o veículo sugerido
                                 setFormData((prev) => ({
                                   ...prev,
                                   marca: veiculo.marca,
@@ -768,7 +724,6 @@ export default function InteressesPage() {
         </CardContent>
       </Card>
 
-      {/* Lista de Interesses */}
       {interesses.length > 0 && (
         <Card>
           <CardHeader>

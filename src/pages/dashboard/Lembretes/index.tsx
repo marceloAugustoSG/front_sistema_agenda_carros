@@ -41,7 +41,6 @@ export default function LembretesPage() {
   const [filtroPrioridade, setFiltroPrioridade] = useState<"todas" | "alta" | "media" | "baixa">("todas")
   const [modalAberto, setModalAberto] = useState<boolean>(false)
 
-  // Carregar dados do localStorage
   useEffect(() => {
     setLembretes(getLembretes())
     setClientes(getClientes())
@@ -96,10 +95,8 @@ export default function LembretesPage() {
       veiculoDescricao: formData.veiculoDescricao || undefined,
     }
 
-    // Salvar no localStorage
     addLembrete(novoLembrete)
-    
-    // Atualizar estado
+
     setLembretes((prev) => [novoLembrete, ...prev])
     toast.success("Lembrete criado com sucesso!")
 
@@ -113,15 +110,13 @@ export default function LembretesPage() {
       veiculoId: "",
       veiculoDescricao: "",
     })
-    
+
     setModalAberto(false)
   }
 
   const handleConcluir = (id: string) => {
-    // Atualizar no localStorage
     updateLembrete(id, { concluido: true })
-    
-    // Atualizar estado
+
     setLembretes((prev) =>
       prev.map((l) => (l.id === id ? { ...l, concluido: true } : l))
     )
@@ -129,10 +124,8 @@ export default function LembretesPage() {
   }
 
   const handleExcluir = (id: string) => {
-    // Remover do localStorage
     deleteLembrete(id)
-    
-    // Atualizar estado
+
     setLembretes((prev) => prev.filter((l) => l.id !== id))
     toast.success("Lembrete removido!")
   }
@@ -202,7 +195,6 @@ export default function LembretesPage() {
 
   return (
     <div className="px-4 lg:px-6 space-y-6">
-      {/* Resumo de Lembretes */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
@@ -248,7 +240,6 @@ export default function LembretesPage() {
         </Card>
       </div>
 
-      {/* Lista de Lembretes */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -294,7 +285,6 @@ export default function LembretesPage() {
                       </Select>
                     </div>
 
-                    {/* Título */}
                     <div className="space-y-2">
                       <Label htmlFor="titulo">
                         Título <span className="text-destructive">*</span>
@@ -309,7 +299,6 @@ export default function LembretesPage() {
                       />
                     </div>
 
-                    {/* Descrição */}
                     <div className="space-y-2">
                       <Label htmlFor="descricao">Descrição</Label>
                       <textarea
@@ -323,7 +312,6 @@ export default function LembretesPage() {
                       />
                     </div>
 
-                    {/* Data */}
                     <div className="space-y-2">
                       <Label htmlFor="data">
                         Data <span className="text-destructive">*</span>
@@ -339,7 +327,6 @@ export default function LembretesPage() {
                       />
                     </div>
 
-                    {/* Tipo */}
                     <div className="space-y-2">
                       <Label htmlFor="tipo">Tipo</Label>
                       <Select
@@ -358,7 +345,6 @@ export default function LembretesPage() {
                       </Select>
                     </div>
 
-                    {/* Prioridade */}
                     <div className="space-y-2">
                       <Label htmlFor="prioridade">Prioridade</Label>
                       <Select
@@ -376,7 +362,6 @@ export default function LembretesPage() {
                       </Select>
                     </div>
 
-                    {/* Veículo Relacionado */}
                     <div className="space-y-2">
                       <Label htmlFor="veiculoDescricao">Veículo Relacionado (opcional)</Label>
                       <Input
@@ -420,100 +405,99 @@ export default function LembretesPage() {
               </Select>
             </div>
           </div>
-          </CardHeader>
-          <CardContent>
-            {lembretesFiltrados.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Nenhum lembrete encontrado com os filtros aplicados.
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {lembretesFiltrados.map((lembrete) => {
-                  const statusData = getStatusData(lembrete.data)
-                  return (
-                    <div
-                      key={lembrete.id}
-                      className={`border-2 rounded-lg p-4 space-y-3 ${
-                        lembrete.concluido
-                          ? "bg-muted/50 opacity-60"
-                          : statusData === "atrasado"
-                            ? "border-red-300 bg-red-50/50 dark:bg-red-950/10"
-                            : statusData === "hoje"
-                              ? "border-yellow-300 bg-yellow-50/50 dark:bg-yellow-950/10"
-                              : "border-gray-200"
+        </CardHeader>
+        <CardContent>
+          {lembretesFiltrados.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Nenhum lembrete encontrado com os filtros aplicados.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {lembretesFiltrados.map((lembrete) => {
+                const statusData = getStatusData(lembrete.data)
+                return (
+                  <div
+                    key={lembrete.id}
+                    className={`border-2 rounded-lg p-4 space-y-3 ${lembrete.concluido
+                      ? "bg-muted/50 opacity-60"
+                      : statusData === "atrasado"
+                        ? "border-red-300 bg-red-50/50 dark:bg-red-950/10"
+                        : statusData === "hoje"
+                          ? "border-yellow-300 bg-yellow-50/50 dark:bg-yellow-950/10"
+                          : "border-gray-200"
                       }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-3 flex-1">
-                          <div className="mt-1">{getIconTipo(lembrete.tipo)}</div>
-                          <div className="flex-1 space-y-2">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h3
-                                className={`font-semibold ${lembrete.concluido ? "line-through" : ""}`}
-                              >
-                                {lembrete.titulo}
-                              </h3>
-                              {getBadgePrioridade(lembrete.prioridade)}
-                              {lembrete.concluido && (
-                                <Badge variant="outline" className="bg-green-50 text-green-700">
-                                  Concluído
-                                </Badge>
-                              )}
-                              {!lembrete.concluido && statusData === "atrasado" && (
-                                <Badge className="bg-red-600 text-white">Atrasado</Badge>
-                              )}
-                              {!lembrete.concluido && statusData === "hoje" && (
-                                <Badge className="bg-yellow-600 text-white">Hoje</Badge>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2 text-sm">
-                              <IconUser className="size-4 text-muted-foreground" />
-                              <span className="font-medium">{lembrete.clienteNome}</span>
-                            </div>
-                            {lembrete.descricao && (
-                              <p className="text-sm text-muted-foreground">{lembrete.descricao}</p>
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-3 flex-1">
+                        <div className="mt-1">{getIconTipo(lembrete.tipo)}</div>
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3
+                              className={`font-semibold ${lembrete.concluido ? "line-through" : ""}`}
+                            >
+                              {lembrete.titulo}
+                            </h3>
+                            {getBadgePrioridade(lembrete.prioridade)}
+                            {lembrete.concluido && (
+                              <Badge variant="outline" className="bg-green-50 text-green-700">
+                                Concluído
+                              </Badge>
                             )}
-                            {lembrete.veiculoDescricao && (
-                              <p className="text-sm text-muted-foreground">
-                                Veículo: {lembrete.veiculoDescricao}
-                              </p>
+                            {!lembrete.concluido && statusData === "atrasado" && (
+                              <Badge className="bg-red-600 text-white">Atrasado</Badge>
                             )}
-                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                              <div className="flex items-center gap-1">
-                                <IconCalendar className="size-3" />
-                                <span>{formatarData(lembrete.data)}</span>
-                              </div>
+                            {!lembrete.concluido && statusData === "hoje" && (
+                              <Badge className="bg-yellow-600 text-white">Hoje</Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            <IconUser className="size-4 text-muted-foreground" />
+                            <span className="font-medium">{lembrete.clienteNome}</span>
+                          </div>
+                          {lembrete.descricao && (
+                            <p className="text-sm text-muted-foreground">{lembrete.descricao}</p>
+                          )}
+                          {lembrete.veiculoDescricao && (
+                            <p className="text-sm text-muted-foreground">
+                              Veículo: {lembrete.veiculoDescricao}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <IconCalendar className="size-3" />
+                              <span>{formatarData(lembrete.data)}</span>
                             </div>
                           </div>
                         </div>
-                        {!lembrete.concluido && (
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleConcluir(lembrete.id)}
-                              className="text-green-600 hover:text-green-700"
-                            >
-                              <IconCheck className="size-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleExcluir(lembrete.id)}
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              <IconX className="size-4" />
-                            </Button>
-                          </div>
-                        )}
                       </div>
+                      {!lembrete.concluido && (
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleConcluir(lembrete.id)}
+                            className="text-green-600 hover:text-green-700"
+                          >
+                            <IconCheck className="size-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleExcluir(lembrete.id)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <IconX className="size-4" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                  )
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

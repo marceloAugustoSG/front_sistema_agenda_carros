@@ -59,10 +59,8 @@ export default function HomePage() {
 
   const vendasUltimos7Dias: any[] = []
 
-  // Ações do dia - tarefas prioritárias para o vendedor
   const hoje = new Date().toISOString().split("T")[0]
-  
-  // Adicionar interesses disponíveis às ações do dia
+
   const acoesInteresses = interessesPendentes
     .filter((i) => i.disponivel)
     .map((interesse) => ({
@@ -78,7 +76,7 @@ export default function HomePage() {
       acao: "notificar" as const,
       data: interesse.dataCadastro,
     }))
-  
+
   const acoesLembretes = lembretes
     .filter((lembrete) => !lembrete.concluido)
     .map((lembrete) => {
@@ -86,13 +84,13 @@ export default function HomePage() {
       const hojeDate = new Date(hoje)
       const diffTime = dataLembrete.getTime() - hojeDate.getTime()
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-      
+
       let tempo = ""
       let acao = "lembrete"
-      
+
       if (diffDays < 0) {
         tempo = `${Math.abs(diffDays)} dia(s) atrás`
-        acao = "lembrete" // Atrasado
+        acao = "lembrete"
       } else if (diffDays === 0) {
         tempo = "Hoje"
         acao = "lembrete"
@@ -104,7 +102,6 @@ export default function HomePage() {
         acao = "lembrete"
       }
 
-      // Buscar telefone do cliente
       const cliente = clientes.find((c) => c.id === lembrete.clienteId)
       const telefone = cliente ? cliente.telefone : ""
 
@@ -123,7 +120,6 @@ export default function HomePage() {
       }
     })
     .filter((acao) => {
-      // Mostrar apenas lembretes de hoje, atrasados ou próximos 3 dias
       const dataLembrete = new Date(acao.data)
       const hojeDate = new Date(hoje)
       const diffTime = dataLembrete.getTime() - hojeDate.getTime()
@@ -131,23 +127,22 @@ export default function HomePage() {
       return diffDays <= 3 || diffDays < 0
     })
     .sort((a, b) => {
-      // Ordenar por: atrasados primeiro, depois por prioridade, depois por data
       const dataA = new Date(a.data)
       const dataB = new Date(b.data)
       const hojeDate = new Date(hoje)
-      
+
       const atrasadoA = dataA < hojeDate
       const atrasadoB = dataB < hojeDate
-      
+
       if (atrasadoA && !atrasadoB) return -1
       if (!atrasadoA && atrasadoB) return 1
-      
+
       const prioridadeOrder = { alta: 3, media: 2, baixa: 1 }
-      const prioridadeDiff = prioridadeOrder[b.prioridade as keyof typeof prioridadeOrder] - 
-                            prioridadeOrder[a.prioridade as keyof typeof prioridadeOrder]
-      
+      const prioridadeDiff = prioridadeOrder[b.prioridade as keyof typeof prioridadeOrder] -
+        prioridadeOrder[a.prioridade as keyof typeof prioridadeOrder]
+
       if (prioridadeDiff !== 0) return prioridadeDiff
-      
+
       return dataA.getTime() - dataB.getTime()
     })
 
@@ -156,41 +151,39 @@ export default function HomePage() {
     ...acoesLembretes,
   ]
     .sort((a, b) => {
-      // Ordenar todas as ações: interesses primeiro (prioridade alta), depois lembretes
       if (a.acao === "notificar" && b.acao !== "notificar") return -1
       if (a.acao !== "notificar" && b.acao === "notificar") return 1
-      
-      // Se ambos são lembretes, manter ordenação anterior
+
       if (a.acao === "lembrete" && b.acao === "lembrete") {
         const dataA = new Date(a.data)
         const dataB = new Date(b.data)
         const hojeDate = new Date(hoje)
-        
+
         const atrasadoA = dataA < hojeDate
         const atrasadoB = dataB < hojeDate
-        
+
         if (atrasadoA && !atrasadoB) return -1
         if (!atrasadoA && atrasadoB) return 1
-        
+
         const prioridadeOrder = { alta: 3, media: 2, baixa: 1 }
-        const prioridadeDiff = prioridadeOrder[b.prioridade as keyof typeof prioridadeOrder] - 
-                              prioridadeOrder[a.prioridade as keyof typeof prioridadeOrder]
-        
+        const prioridadeDiff = prioridadeOrder[b.prioridade as keyof typeof prioridadeOrder] -
+          prioridadeOrder[a.prioridade as keyof typeof prioridadeOrder]
+
         if (prioridadeDiff !== 0) return prioridadeDiff
-        
+
         return dataA.getTime() - dataB.getTime()
       }
-      
+
       return 0
     })
-    .slice(0, 10) // Limitar a 10 ações
+    .slice(0, 10)
 
   const [buscaRapida, setBuscaRapida] = useState("")
   const [resultadosBusca, setResultadosBusca] = useState<Veiculo[]>([])
 
   const handleBusca = (valor: string) => {
     setBuscaRapida(valor)
-    
+
     if (valor.trim() === "") {
       setResultadosBusca([])
       return
@@ -204,13 +197,12 @@ export default function HomePage() {
         `${veiculo.marca} ${veiculo.modelo}`.toLowerCase().includes(termo) ||
         veiculo.ano.includes(termo)
     )
-    
+
     setResultadosBusca(resultados)
   }
 
   return (
     <div className="px-4 lg:px-6 space-y-6">
-      {/* Busca Rápida */}
       <Card className="border-2 border-primary/20">
         <CardContent className="pt-6">
           <div className="space-y-4">
@@ -229,7 +221,6 @@ export default function HomePage() {
               <IconSearch className="absolute right-4 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
             </div>
 
-            {/* Resultados da Busca */}
             {buscaRapida.trim() !== "" && (
               <div className="space-y-2">
                 {resultadosBusca.length > 0 ? (
@@ -294,7 +285,6 @@ export default function HomePage() {
         </CardContent>
       </Card>
 
-      {/* Ações do Dia */}
       <Card className="border-2 border-yellow-200 bg-yellow-50/50 dark:bg-yellow-950/10">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -443,7 +433,6 @@ export default function HomePage() {
         </CardContent>
       </Card>
 
-      {/* Resumo do Dia */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
@@ -511,7 +500,6 @@ export default function HomePage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Interesses Pendentes */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -584,7 +572,6 @@ export default function HomePage() {
           </CardContent>
         </Card>
 
-        {/* Cards Informativos */}
         <div className="space-y-4">
           <Card>
             <CardHeader>
@@ -641,7 +628,6 @@ export default function HomePage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Gráfico de Vendas */}
         <Card>
           <CardHeader>
             <CardTitle>Vendas dos Últimos 7 Dias</CardTitle>
@@ -675,7 +661,6 @@ export default function HomePage() {
           </CardContent>
         </Card>
 
-        {/* Atividades Recentes */}
         <Card>
           <CardHeader>
             <CardTitle>Atividades Recentes</CardTitle>
